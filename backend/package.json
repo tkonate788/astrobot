@@ -1,0 +1,37 @@
+{
+  "name": "astrobot-backend",
+  "version": "2.0.0",
+  "description": "AstroBot - Intelligent Space Assistant Backend (University graduation project)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.0",
+    "pg": "^8.11.0",
+    "dotenv": "^16.0.3",
+    "express-rate-limit": "^6.7.0",
+    "helmet": "^7.0.0",
+    "pdfkit": "^0.15.0",
+    "tesseract.js": "^5.1.1",
+    "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "AstroBot Team",
+  "contributors": [
+    "Tidiane Konaté",
+    "Sidi Mohamed Sall",
+    "Ahmed Essalem",
+    "Saad Ibrahim Houssein"
+  ],
+  "license": "MIT"
+}

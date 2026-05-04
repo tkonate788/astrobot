@@ -1,0 +1,2664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AstroBot — Mission Control Chat" />
+  <title>AstroBot — Mission Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&family=Exo+2:wght@300;400;600&display=swap" />
+  <!-- KaTeX for LaTeX math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <!-- highlight.js for code syntax highlighting (dark default; light variant loaded on demand) -->
+  <link rel="stylesheet" id="hljsTheme" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/atom-one-dark.min.css" />
+  <!-- Cropper.js for profile photo crop -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" />
+  <link rel="stylesheet" href="style.css?v=4.2" />
+  <style>
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      height: calc(var(--app-vh, 1vh) * 100);
+      overflow: hidden;
+      margin: 0;
+    }
+  </style>
+  <script>
+    // iOS-safe viewport height: window.innerHeight always reflects the currently
+    // visible area (unlike 100vh / 100dvh which can be stale on Safari).
+    (function () {
+      function setAppVH() {
+        var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+        document.documentElement.style.setProperty('--app-vh', (h * 0.01) + 'px');
+      }
+      setAppVH();
+      window.addEventListener('resize', setAppVH);
+      window.addEventListener('orientationchange', setAppVH);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', setAppVH);
+      }
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- Star field background -->
+  <div class="stars-canvas" aria-hidden="true"></div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer" aria-live="assertive" aria-atomic="true"></div>
+
+  <!-- Logout modal -->
+  <div class="modal-overlay" id="logoutModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card glass-card">
+      <div class="modal-title" id="modalTitle">End Mission?</div>
+      <div class="modal-desc">Are you sure you want to log out of AstroBot?</div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-sm" id="cancelLogout">Cancel</button>
+        <button class="btn btn-danger btn-sm" id="confirmLogout">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings modal -->
+  <div class="modal-overlay" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-card glass-card settings-card">
+      <div class="settings-header">
+        <div class="settings-title" id="settingsTitle">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color:var(--accent-cyan)">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          Settings
+        </div>
+        <button class="settings-close" id="closeSettings" aria-label="Close settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="settings-tabs">
+        <button class="settings-tab active" data-tab="profile">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
+        </button>
+        <button class="settings-tab" data-tab="security">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Security
+        </button>
+        <button class="settings-tab" data-tab="display">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+          Display
+        </button>
+      </div>
+
+      <!-- Profile panel -->
+      <div class="settings-panel active" id="panel-profile">
+        <div id="profileAlert" class="alert" role="alert"></div>
+
+        <!-- Profile photo section -->
+        <div class="avatar-section">
+          <div class="avatar-section-label">Profile Photo</div>
+          <div class="avatar-section-row">
+            <div class="avatar-preview" id="avatarPreview">
+              <span class="avatar-preview-initials" id="avatarPreviewInitials">?</span>
+            </div>
+            <div class="avatar-controls">
+              <input type="file" id="avatarFileInput" hidden accept="image/png,image/jpeg,image/webp,image/gif" />
+              <button type="button" class="btn btn-primary btn-sm" id="avatarChooseBtn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Choose &amp; Crop
+              </button>
+              <button type="button" class="btn btn-ghost btn-sm" id="avatarRemoveBtn" hidden>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+                Remove
+              </button>
+              <div class="avatar-hint">PNG / JPG · max 5 MB</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-form">
+          <div class="input-group">
+            <label for="settingsName">First Name</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </span>
+              <input type="text" id="settingsName" class="input-field" placeholder="First name" autocomplete="given-name" />
+            </div>
+          </div>
+          <div class="input-group">
+            <label for="settingsSurname">Last Name</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </span>
+              <input type="text" id="settingsSurname" class="input-field" placeholder="Last name" autocomplete="family-name" />
+            </div>
+          </div>
+          <div class="input-group">
+            <label for="settingsEmail">Email</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              </span>
+              <input type="email" id="settingsEmail" class="input-field" disabled style="opacity:0.5;cursor:not-allowed;" />
+            </div>
+          </div>
+          <button class="btn btn-primary" id="saveProfileBtn" style="width:100%;margin-top:4px;">
+            Save Changes
+          </button>
+        </div>
+      </div>
+
+      <!-- Security panel -->
+      <div class="settings-panel" id="panel-security">
+        <div id="securityAlert" class="alert" role="alert"></div>
+        <div class="settings-form">
+          <div class="input-group">
+            <label for="currentPassword">Current Password</label>
+            <div class="input-wrap">
+              <span class="input-icon">🔒</span>
+              <input type="password" id="currentPassword" class="input-field has-toggle" placeholder="Enter current password" autocomplete="current-password" />
+              <button type="button" class="input-toggle" data-target="currentPassword">👁️</button>
+            </div>
+          </div>
+          <div class="input-group">
+            <label for="newPassword">New Password</label>
+            <div class="input-wrap">
+              <span class="input-icon">🔑</span>
+              <input type="password" id="newPassword" class="input-field has-toggle" placeholder="Min. 8 characters" autocomplete="new-password" />
+              <button type="button" class="input-toggle" data-target="newPassword">👁️</button>
+            </div>
+          </div>
+          <div class="input-group">
+            <label for="confirmNewPassword">Confirm New Password</label>
+            <div class="input-wrap">
+              <span class="input-icon">🔑</span>
+              <input type="password" id="confirmNewPassword" class="input-field has-toggle" placeholder="Repeat new password" autocomplete="new-password" />
+              <button type="button" class="input-toggle" data-target="confirmNewPassword">👁️</button>
+            </div>
+            <div class="match-indicator" id="pwMatchIndicator"></div>
+          </div>
+          <button class="btn btn-primary" id="savePasswordBtn" style="width:100%;margin-top:4px;">
+            Change Password
+          </button>
+        </div>
+      </div>
+
+      <!-- Display panel -->
+      <div class="settings-panel" id="panel-display">
+        <div class="settings-form">
+          <div class="display-option">
+            <div class="display-option-label">UI density</div>
+            <div class="display-option-toggle" id="densityToggle">
+              <button class="density-btn" data-density="comfortable">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                Comfortable
+              </button>
+              <button class="density-btn" data-density="compact">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="5" x2="21" y2="5"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="13" x2="21" y2="13"/><line x1="3" y1="17" x2="21" y2="17"/><line x1="3" y1="21" x2="21" y2="21"/></svg>
+                Compact
+              </button>
+            </div>
+            <div class="display-option-hint">Compact mode reduces padding and font sizes for more content on screen.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Crop modal (avatar) -->
+  <div class="modal-overlay" id="cropModal" role="dialog" aria-modal="true" aria-labelledby="cropModalTitle">
+    <div class="modal-card glass-card crop-card">
+      <div class="settings-header">
+        <div class="settings-title" id="cropModalTitle">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color:var(--accent-cyan)">
+            <path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>
+          </svg>
+          Crop your photo
+        </div>
+        <button class="settings-close" id="cropClose" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="crop-body">
+        <div class="crop-canvas-wrap">
+          <img id="cropImage" alt="Crop preview" />
+        </div>
+        <div class="crop-toolbar">
+          <button type="button" class="crop-tool-btn" data-action="zoom-in" title="Zoom in">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+          <button type="button" class="crop-tool-btn" data-action="zoom-out" title="Zoom out">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+          <button type="button" class="crop-tool-btn" data-action="rotate-left" title="Rotate left">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          </button>
+          <button type="button" class="crop-tool-btn" data-action="rotate-right" title="Rotate right">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </button>
+          <button type="button" class="crop-tool-btn" data-action="flip-h" title="Flip horizontal">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          </button>
+          <button type="button" class="crop-tool-btn" data-action="reset" title="Reset">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="crop-actions">
+        <button class="btn btn-ghost btn-sm" id="cropCancel">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="cropSave">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:6px;"><polyline points="20 6 9 17 4 12"/></svg>
+          Save photo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Tools modal (Notebook, YouTube, Image-edit, Workflows) ── -->
+  <div class="modal-overlay" id="toolsModal" role="dialog" aria-modal="true">
+    <div class="modal-card glass-card tools-card">
+      <div class="settings-header">
+        <div class="settings-title">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent-cyan)"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          AstroBot Tools
+        </div>
+        <button class="settings-close" id="toolsClose" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="settings-tabs">
+        <button class="settings-tab active" data-tools-tab="notebook">📚 Notebook / RAG</button>
+        <button class="settings-tab" data-tools-tab="youtube">🎥 YouTube</button>
+        <button class="settings-tab" data-tools-tab="img-edit">🎨 Image edit</button>
+        <button class="settings-tab" data-tools-tab="workflows">⚙️ Workflows</button>
+      </div>
+
+      <!-- Notebook / RAG -->
+      <div class="settings-panel active" id="tools-panel-notebook">
+        <p class="tools-intro">Upload a document (PDF or text). Then bind it to this conversation as a permanent context — every question will be answered using that document.</p>
+
+        <div id="notebookCurrentBinding" class="tools-active-binding" hidden></div>
+
+        <input type="file" id="notebookFileInput" hidden accept=".pdf,.txt,.md,.csv,.json,.xml,text/*" />
+        <button class="btn btn-primary" id="notebookUploadBtn" style="width:100%;justify-content:center;">📤 Upload document</button>
+
+        <div class="tools-section-label">Your documents</div>
+        <div class="documents-list" id="documentsList">
+          <div class="docs-empty" style="text-align:center;padding:18px;color:var(--text-muted);font-size:0.86rem;">No documents yet.</div>
+        </div>
+      </div>
+
+      <!-- YouTube -->
+      <div class="settings-panel" id="tools-panel-youtube">
+        <p class="tools-intro">Paste a YouTube URL. AstroBot will fetch the transcript and inject it as context — then ask anything about the video.</p>
+        <div class="input-group">
+          <label>YouTube URL</label>
+          <div class="input-wrap">
+            <input type="url" id="ytUrl" class="input-field" placeholder="https://youtube.com/watch?v=..." style="padding-left:14px" />
+          </div>
+        </div>
+        <button class="btn btn-primary" id="ytFetchBtn" style="width:100%;justify-content:center;margin-top:6px;">📥 Fetch transcript</button>
+        <div id="ytResult" class="tools-result" hidden></div>
+      </div>
+
+      <!-- Image edit -->
+      <div class="settings-panel" id="tools-panel-img-edit">
+        <p class="tools-intro">Upload an image and describe how to transform it (e.g. "anime style", "watercolor painting", "add sunglasses"). Powered by FLUX img2img.</p>
+        <input type="file" id="imgEditInput" hidden accept="image/*" />
+        <div class="img-edit-row">
+          <button class="btn btn-ghost" id="imgEditChooseBtn" style="flex:0 0 auto;">Choose image</button>
+          <div class="img-edit-preview" id="imgEditPreview"><span style="color:var(--text-muted);font-size:0.82rem;">No image</span></div>
+        </div>
+        <div class="input-group" style="margin-top:10px;">
+          <label>Transformation prompt</label>
+          <input type="text" id="imgEditPrompt" class="input-field" placeholder="anime style, vibrant colors..." style="padding-left:14px" />
+        </div>
+        <button class="btn btn-primary" id="imgEditRunBtn" style="width:100%;justify-content:center;margin-top:8px;" disabled>🎨 Generate variation</button>
+        <div id="imgEditResult" class="tools-result" hidden></div>
+      </div>
+
+      <!-- Workflows -->
+      <div class="settings-panel" id="tools-panel-workflows">
+        <p class="tools-intro">Compose a chain of prompts. AstroBot runs each step in sequence, passing the output of step N as input to step N+1.</p>
+        <div class="workflow-editor">
+          <div class="input-group">
+            <label>Workflow name</label>
+            <input type="text" id="wfName" class="input-field" placeholder="e.g. Article → Summary → Tweet" style="padding-left:14px" />
+          </div>
+          <div class="tools-section-label" style="margin-top:8px;">Steps</div>
+          <div id="wfSteps"></div>
+          <button class="btn btn-ghost btn-sm" id="wfAddStepBtn" style="margin-top:6px;">+ Add step</button>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button class="btn btn-primary" id="wfSaveBtn" style="flex:1;justify-content:center;">💾 Save workflow</button>
+            <button class="btn btn-orange" id="wfRunBtn" style="flex:1;justify-content:center;">▶️ Run now</button>
+          </div>
+        </div>
+
+        <div class="tools-section-label">Saved workflows</div>
+        <div class="workflows-list" id="workflowsList">
+          <div style="text-align:center;padding:18px;color:var(--text-muted);font-size:0.86rem;">No workflows yet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar overlay backdrop (mobile only) -->
+  <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+  <!-- Sidebar: direct body child (on mobile it's a drawer,
+       on desktop it's fixed at the left with chat-app shifted right) -->
+  <aside class="sidebar" id="sidebar" aria-label="Navigation sidebar">
+
+      <!-- Header -->
+      <div class="sidebar-header">
+        <!-- Tiny robot icon 30px -->
+        <svg width="30" height="34" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="filter:drop-shadow(0 0 8px rgba(0,212,255,0.6))">
+          <defs>
+            <radialGradient id="sb-body" cx="40%" cy="30%" r="70%">
+              <stop offset="0%" stop-color="#fff"/>
+              <stop offset="100%" stop-color="#b8d9f0"/>
+            </radialGradient>
+            <radialGradient id="sb-eye" cx="35%" cy="30%" r="65%">
+              <stop offset="0%" stop-color="#80deea"/>
+              <stop offset="100%" stop-color="#006064"/>
+            </radialGradient>
+          </defs>
+          <line x1="100" y1="10" x2="100" y2="40" stroke="#4dd0e1" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="100" cy="8" r="6" fill="#00d4ff"/>
+          <rect x="55" y="38" width="90" height="70" rx="20" fill="url(#sb-body)"/>
+          <rect x="66" y="55" width="28" height="18" rx="5" fill="#0d1b35"/>
+          <rect x="106" y="55" width="28" height="18" rx="5" fill="#0d1b35"/>
+          <rect x="68" y="57" width="24" height="14" rx="4" fill="url(#sb-eye)" stroke="rgba(0,212,255,0.9)" stroke-width="1.5"/>
+          <rect x="108" y="57" width="24" height="14" rx="4" fill="url(#sb-eye)" stroke="rgba(0,212,255,0.9)" stroke-width="1.5"/>
+          <rect x="88" y="108" width="24" height="12" rx="4" fill="#dce8f0"/>
+          <rect x="50" y="118" width="100" height="80" rx="22" fill="url(#sb-body)"/>
+          <circle cx="100" cy="155" r="7" fill="url(#sb-eye)"/>
+          <path d="M 58 125 Q 30 160 38 210 L 50 205 Q 52 175 62 155 Z" fill="#1a73e8" opacity="0.85"/>
+          <path d="M 142 125 Q 170 160 162 210 L 150 205 Q 148 175 138 155 Z" fill="#1a73e8" opacity="0.85"/>
+        </svg>
+        <span class="sidebar-logo-name">ASTROBOT</span>
+        <!-- Close button (mobile drawer only) -->
+        <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- User section -->
+      <div class="sidebar-user">
+        <div class="user-avatar" id="userInitials" aria-hidden="true">?</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">Commander</div>
+          <div class="user-role">Commander</div>
+        </div>
+        <button class="settings-btn" id="settingsBtn" aria-label="Open settings" title="Settings">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Navigation -->
+      <div class="sidebar-nav">
+        <button class="new-chat-btn" id="newChatBtn" aria-label="Start a new chat">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          New Chat
+        </button>
+
+        <!-- Search history -->
+        <div class="sidebar-search">
+          <svg class="sidebar-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" class="sidebar-search-input" id="sidebarSearch" placeholder="Search history..." aria-label="Search chat history" />
+          <button class="sidebar-search-clear" id="sidebarSearchClear" aria-label="Clear search" hidden>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Tag filter row -->
+        <div class="tag-filter-wrap" id="tagFilterWrap"></div>
+
+        <div class="nav-section-label">History</div>
+        <div class="history-list" id="historyList">
+          <div class="history-empty">
+            <div style="font-size:1.4rem;margin-bottom:8px;opacity:0.4;">🌌</div>
+            No missions yet.<br/>Start chatting!
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="sidebar-footer">
+        <button class="logout-btn" id="logoutBtn" aria-label="Logout from AstroBot">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Logout
+        </button>
+      </div>
+  </aside>
+
+  <!-- Chat app layout -->
+  <div class="chat-app">
+
+    <!-- Main chat area -->
+    <main class="chat-main" role="main">
+
+      <!-- Drag & drop overlay (shown when files are dragged onto the chat) -->
+      <div class="drop-overlay" id="dropOverlay" aria-hidden="true">
+        <div class="drop-overlay-inner">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <div class="drop-overlay-title">Drop files to attach</div>
+          <div class="drop-overlay-sub">Images, PDFs, documents — up to 10 MB each</div>
+        </div>
+      </div>
+
+      <!-- Chat header -->
+      <header class="chat-header">
+        <!-- Mobile menu button (visible only on mobile) -->
+        <button class="chat-menu-btn" id="chatMenuBtn" aria-label="Open navigation menu" aria-expanded="false">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+
+        <div class="chat-header-bot">
+          <!-- Mini robot avatar 20px in circular container -->
+          <div class="chat-bot-avatar">
+            <svg viewBox="0 0 200 240" width="26" height="26" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <radialGradient id="hdr-body" cx="40%" cy="30%" r="70%">
+                  <stop offset="0%" stop-color="#fff"/>
+                  <stop offset="100%" stop-color="#b8d9f0"/>
+                </radialGradient>
+                <radialGradient id="hdr-eye" cx="35%" cy="30%" r="65%">
+                  <stop offset="0%" stop-color="#80deea"/>
+                  <stop offset="100%" stop-color="#006064"/>
+                </radialGradient>
+              </defs>
+              <rect x="55" y="38" width="90" height="70" rx="20" fill="url(#hdr-body)"/>
+              <rect x="62" y="82" width="76" height="26" rx="8" fill="rgba(0,10,35,0.9)"/>
+              <rect x="66" y="55" width="28" height="18" rx="5" fill="url(#hdr-eye)" stroke="rgba(0,212,255,0.9)" stroke-width="1.5"/>
+              <rect x="106" y="55" width="28" height="18" rx="5" fill="url(#hdr-eye)" stroke="rgba(0,212,255,0.9)" stroke-width="1.5"/>
+              <line x1="100" y1="10" x2="100" y2="38" stroke="#4dd0e1" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="100" cy="8" r="5" fill="#00d4ff"/>
+            </svg>
+          </div>
+          <div>
+            <div class="chat-bot-name">AstroBot</div>
+            <div class="chat-bot-status">
+              <div class="status-dot" aria-hidden="true"></div>
+              Online
+            </div>
+          </div>
+        </div>
+
+        <!-- Tools menu (Notebook, YouTube, Image-edit, Workflows) -->
+        <div class="header-action-wrap">
+          <button class="header-action-btn" id="toolsBtn" aria-label="Open tools" title="Tools">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Persona selector -->
+        <div class="persona-select-wrap" title="Change bot persona">
+          <select class="persona-select" id="personaSelect" aria-label="Bot persona">
+            <option value="default">🤖 Default</option>
+            <option value="formal">🎩 Formal</option>
+            <option value="casual">😎 Casual</option>
+            <option value="teacher">🎓 Teacher</option>
+            <option value="dev">💻 Senior Dev</option>
+            <option value="poet">🎭 Poet</option>
+            <option value="scientist">🔬 Scientist</option>
+          </select>
+        </div>
+
+        <!-- Export session dropdown -->
+        <div class="header-action-wrap">
+          <button class="header-action-btn" id="exportBtn" aria-label="Export conversation" title="Export conversation">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </button>
+          <div class="header-menu" id="exportMenu" hidden>
+            <button class="header-menu-item" data-format="pdf">📄 Export as PDF</button>
+            <button class="header-menu-item" data-format="md">📝 Export as Markdown</button>
+            <button class="header-menu-item" data-format="json">🗂️ Export as JSON</button>
+          </div>
+        </div>
+
+        <!-- Theme toggle -->
+        <button class="header-action-btn theme-toggle" id="themeToggle" aria-label="Toggle light/dark theme" title="Toggle theme">
+          <svg class="theme-icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <svg class="theme-icon-light" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="display:none">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+        </button>
+      </header>
+
+      <!-- Messages area -->
+      <section class="chat-messages" id="messagesContainer" aria-label="Chat messages" aria-live="polite">
+
+        <!-- Welcome screen (shown initially) -->
+        <div class="welcome-screen" id="welcomeScreen">
+          <!-- 80px robot -->
+          <svg class="welcome-robot" viewBox="0 0 200 240" width="90" height="108" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <radialGradient id="wb-body" cx="40%" cy="30%" r="70%">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="60%" stop-color="#e8f4fd"/>
+                <stop offset="100%" stop-color="#b8d9f0"/>
+              </radialGradient>
+              <radialGradient id="wb-eye" cx="35%" cy="30%" r="65%">
+                <stop offset="0%" stop-color="#80deea"/>
+                <stop offset="40%" stop-color="#00d4ff"/>
+                <stop offset="100%" stop-color="#006064"/>
+              </radialGradient>
+              <linearGradient id="wb-cape" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#1a73e8"/>
+                <stop offset="100%" stop-color="#0d47a1"/>
+              </linearGradient>
+              <filter id="wb-glow" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <line x1="100" y1="10" x2="100" y2="40" stroke="#4dd0e1" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="100" cy="8" r="6" fill="#00d4ff" filter="url(#wb-glow)">
+              <animate attributeName="r" values="5;7;5" dur="1.8s" repeatCount="indefinite"/>
+            </circle>
+            <rect x="55" y="38" width="90" height="70" rx="20" fill="url(#wb-body)"/>
+            <rect x="42" y="58" width="14" height="24" rx="7" fill="url(#wb-body)" stroke="rgba(0,212,255,0.3)" stroke-width="1"/>
+            <circle cx="49" cy="70" r="4" fill="rgba(0,212,255,0.5)">
+              <animate attributeName="opacity" values="0.4;1;0.4" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <rect x="144" y="58" width="14" height="24" rx="7" fill="url(#wb-body)" stroke="rgba(0,212,255,0.3)" stroke-width="1"/>
+            <circle cx="151" cy="70" r="4" fill="rgba(0,212,255,0.5)">
+              <animate attributeName="opacity" values="0.4;1;0.4" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+            </circle>
+            <rect x="66" y="55" width="28" height="18" rx="5" fill="#0d1b35"/>
+            <rect x="106" y="55" width="28" height="18" rx="5" fill="#0d1b35"/>
+            <rect x="68" y="57" width="24" height="14" rx="4" fill="url(#wb-eye)" filter="url(#wb-glow)" stroke="rgba(0,212,255,0.9)" stroke-width="1.5"/>
+            <rect x="108" y="57" width="24" height="14" rx="4" fill="url(#wb-eye)" filter="url(#wb-glow)" stroke="rgba(0,212,255,0.9)" stroke-width="1.5"/>
+            <rect x="70" y="59" width="7" height="5" rx="2" fill="white" opacity="0.6"/>
+            <rect x="110" y="59" width="7" height="5" rx="2" fill="white" opacity="0.6"/>
+            <rect x="88" y="108" width="24" height="12" rx="4" fill="#dce8f0"/>
+            <rect x="50" y="118" width="100" height="80" rx="22" fill="url(#wb-body)"/>
+            <rect x="70" y="132" width="60" height="40" rx="10" fill="rgba(0,180,216,0.12)" stroke="rgba(0,212,255,0.3)" stroke-width="1"/>
+            <circle cx="100" cy="150" r="8" fill="none" stroke="#00d4ff" stroke-width="1.5"/>
+            <circle cx="100" cy="150" r="4" fill="url(#wb-eye)" filter="url(#wb-glow)">
+              <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <path d="M 58 125 Q 30 160 38 205 L 50 200 Q 52 175 62 155 Z" fill="url(#wb-cape)" opacity="0.85"/>
+            <path d="M 142 125 Q 170 160 162 205 L 150 200 Q 148 175 138 155 Z" fill="url(#wb-cape)" opacity="0.85"/>
+            <rect x="28" y="122" width="22" height="50" rx="11" fill="url(#wb-body)"/>
+            <circle cx="39" cy="177" r="9" fill="#e0f0ff"/>
+            <circle cx="39" cy="177" r="4" fill="#1a73e8"/>
+            <rect x="150" y="122" width="22" height="50" rx="11" fill="url(#wb-body)"/>
+            <circle cx="161" cy="177" r="9" fill="#e0f0ff"/>
+            <circle cx="161" cy="177" r="4" fill="#1a73e8"/>
+            <rect x="68" y="196" width="26" height="36" rx="13" fill="url(#wb-body)"/>
+            <circle cx="81" cy="232" r="9" fill="#e0f0ff"/>
+            <circle cx="81" cy="232" r="4" fill="#00d4ff"/>
+            <rect x="106" y="196" width="26" height="36" rx="13" fill="url(#wb-body)"/>
+            <circle cx="119" cy="232" r="9" fill="#e0f0ff"/>
+            <circle cx="119" cy="232" r="4" fill="#00d4ff"/>
+          </svg>
+
+          <h2 class="welcome-title">Welcome back, <span id="welcomeName">Commander</span></h2>
+          <p class="welcome-sub">
+            I'm AstroBot, your intelligent space assistant. Ask me anything —
+            from mission planning to the mysteries of the universe.
+          </p>
+
+          <div class="quick-prompts">
+            <button class="quick-prompt">What can you help me with?</button>
+            <button class="quick-prompt">Tell me something amazing about space</button>
+            <button class="quick-prompt">How does AI work?</button>
+            <button class="quick-prompt">Give me a fun space fact</button>
+          </div>
+        </div>
+
+        <!-- Messages are appended here by JS -->
+        <div id="messagesArea" style="display:none;flex-direction:column;gap:20px;"></div>
+
+      </section>
+
+      <!-- Chat input area -->
+      <div class="chat-input-area">
+        <!-- Recording indicator -->
+        <div class="recording-indicator" id="recordingIndicator" aria-live="polite">
+          <div class="rec-dot" aria-hidden="true"></div>
+          Recording… <span id="recTime">0:00</span> &nbsp;(click mic to stop)
+        </div>
+
+        <!-- Attachment chips container (supports multiple) -->
+        <div class="attachment-chips" id="attachmentChips" aria-live="polite"></div>
+
+        <div class="chat-input-wrap" id="inputWrap">
+          <!-- Hidden file input (multiple) -->
+          <input type="file" id="fileInput" hidden multiple
+                 accept="image/*,.pdf,.doc,.docx,.txt,.md,.csv,.xlsx,.json" />
+
+          <textarea
+            class="chat-textarea"
+            id="chatInput"
+            rows="1"
+            placeholder="Ask AstroBot anything…"
+            maxlength="4000"
+            aria-label="Message input"
+            autocomplete="off"
+            spellcheck="true"
+          ></textarea>
+          <div class="input-actions">
+            <button class="attach-btn" id="attachBtn" aria-label="Attach a file or image" title="Attach a file or image">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+              </svg>
+            </button>
+            <button class="mic-btn" id="micBtn" aria-label="Record audio message" title="Record audio message">
+              🎤
+            </button>
+            <button class="send-btn" id="sendBtn" aria-label="Send message" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+            <button class="stop-btn" id="stopBtn" aria-label="Stop generation" title="Stop" hidden>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <rect x="6" y="6" width="12" height="12" rx="2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <p class="input-hint">
+          Press <kbd>Enter</kbd> to send &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> for new line &nbsp;·&nbsp; 📎 attach · 🎤 record
+        </p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ── Auth check ──────────────────────────────────────────────────
+    const token = localStorage.getItem('astrobot_token');
+    const userStr = localStorage.getItem('astrobot_user');
+    if (!token || !userStr) { window.location.href = '/login.html'; }
+    const user = JSON.parse(userStr);
+
+    // ── Set user info ───────────────────────────────────────────────
+    const initials = (user.name[0] + user.surname[0]).toUpperCase();
+    document.getElementById('userName').textContent = user.name + ' ' + user.surname;
+    document.getElementById('welcomeName').textContent = user.name + '!';
+
+    // Apply avatar (photo or initials) to all user avatars in the layout.
+    // user.avatar is a data URL set via Settings → Profile Photo, or null.
+    function applyAvatarTo(el) {
+      if (!el) return;
+      el.innerHTML = '';
+      el.classList.toggle('has-photo', !!user.avatar);
+      if (user.avatar) {
+        const img = document.createElement('img');
+        img.src = user.avatar;
+        img.alt = user.name + ' ' + user.surname;
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;';
+        el.appendChild(img);
+      } else {
+        el.textContent = initials;
+      }
+    }
+    function refreshAllAvatars() {
+      ['userInitials'].forEach((id) => applyAvatarTo(document.getElementById(id)));
+      // Also refresh existing user message avatars in the conversation
+      document.querySelectorAll('.msg-avatar.user-av').forEach((el) => applyAvatarTo(el));
+    }
+    refreshAllAvatars();
+
+    // ── Session ID ──────────────────────────────────────────────────
+    // ── Session persistence ─────────────────────────────────────────
+    // Restore the session_id from localStorage so a refresh keeps the same
+    // conversation. Generate a new one only on first load or after "New Chat".
+    const SESSION_KEY = 'astrobot_session_id';
+    function newSessionId() {
+      return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+    function setCurrentSession(id) {
+      currentSessionId = id;
+      try { localStorage.setItem(SESSION_KEY, id); } catch (_) {}
+    }
+    let currentSessionId = localStorage.getItem(SESSION_KEY) || newSessionId();
+    try { localStorage.setItem(SESSION_KEY, currentSessionId); } catch (_) {}
+
+    // ── API helper ──────────────────────────────────────────────────
+    async function apiPost(endpoint, data) {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(data)
+      });
+      if (res.status === 401) { localStorage.clear(); window.location.href = '/login.html'; }
+      return res.json();
+    }
+
+    // ── Escape HTML ─────────────────────────────────────────────────
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // ── Lightweight safe markdown renderer for bot messages ─────────
+    // Escapes HTML first, then applies: headings, bold, italic, inline
+    // code, fenced code blocks, links, unordered/ordered lists, blockquotes,
+    // horizontal rules, and paragraph breaks.
+    function renderMarkdown(src) {
+      if (!src) return '';
+      // Extract fenced code blocks first so their content isn't mangled
+      const codeBlocks = [];
+      let text = src.replace(/```([a-zA-Z0-9_-]*)\n?([\s\S]*?)```/g, (m, lang, code) => {
+        codeBlocks.push({ lang: lang || '', code: code });
+        return '\u0000CODEBLOCK' + (codeBlocks.length - 1) + '\u0000';
+      });
+
+      // Escape HTML on the remaining text
+      text = escapeHtml(text);
+
+      // Headings (###, ##, #) at start of line
+      text = text.replace(/^###\s+(.+)$/gm, '<h4 class="md-h">$1</h4>');
+      text = text.replace(/^##\s+(.+)$/gm,  '<h3 class="md-h">$1</h3>');
+      text = text.replace(/^#\s+(.+)$/gm,   '<h2 class="md-h">$1</h2>');
+
+      // Horizontal rule
+      text = text.replace(/^\s*---\s*$/gm, '<hr class="md-hr"/>');
+
+      // Blockquotes
+      text = text.replace(/^&gt;\s?(.+)$/gm, '<blockquote class="md-bq">$1</blockquote>');
+
+      // Inline code (before bold/italic so backticks don't conflict)
+      text = text.replace(/`([^`\n]+)`/g, '<code class="md-ic">$1</code>');
+
+      // Bold **text** and __text__
+      text = text.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+      text = text.replace(/__([^_\n]+)__/g, '<strong>$1</strong>');
+
+      // Italic *text* and _text_ (avoid matching inside words)
+      text = text.replace(/(^|[^*\w])\*([^*\n]+?)\*(?!\*)/g, '$1<em>$2</em>');
+      text = text.replace(/(^|[^_\w])_([^_\n]+?)_(?!_)/g, '$1<em>$2</em>');
+
+      // Links [text](url) — only http(s) for safety
+      text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+      // Autolinks for bare http(s) URLs
+      text = text.replace(/(^|\s)(https?:\/\/[^\s<]+)/g, '$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>');
+
+      // Lists: detect consecutive "- " or "* " or "1. " lines and wrap
+      const lines = text.split('\n');
+      const out = [];
+      let inUl = false, inOl = false;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const ulMatch = line.match(/^\s*[-*]\s+(.*)$/);
+        const olMatch = line.match(/^\s*\d+\.\s+(.*)$/);
+        if (ulMatch) {
+          if (inOl) { out.push('</ol>'); inOl = false; }
+          if (!inUl) { out.push('<ul class="md-list">'); inUl = true; }
+          out.push('<li>' + ulMatch[1] + '</li>');
+        } else if (olMatch) {
+          if (inUl) { out.push('</ul>'); inUl = false; }
+          if (!inOl) { out.push('<ol class="md-list">'); inOl = true; }
+          out.push('<li>' + olMatch[1] + '</li>');
+        } else {
+          if (inUl) { out.push('</ul>'); inUl = false; }
+          if (inOl) { out.push('</ol>'); inOl = false; }
+          out.push(line);
+        }
+      }
+      if (inUl) out.push('</ul>');
+      if (inOl) out.push('</ol>');
+      text = out.join('\n');
+
+      // Paragraphs: split on blank lines, but keep block elements intact
+      const blocks = text.split(/\n{2,}/);
+      text = blocks.map(b => {
+        const trimmed = b.trim();
+        if (!trimmed) return '';
+        if (/^<(h\d|ul|ol|li|blockquote|pre|hr|code)/i.test(trimmed)) return trimmed;
+        // Convert single newlines inside a paragraph to <br>
+        return '<p class="md-p">' + trimmed.replace(/\n/g, '<br>') + '</p>';
+      }).join('');
+
+      // Restore code blocks
+      text = text.replace(/\u0000CODEBLOCK(\d+)\u0000/g, (m, idx) => {
+        const cb = codeBlocks[Number(idx)];
+        const lang = cb.lang ? ' data-lang="' + escapeHtml(cb.lang) + '"' : '';
+        return '<pre class="md-pre"' + lang + '><code>' + escapeHtml(cb.code) + '</code></pre>';
+      });
+
+      return text;
+    }
+
+    // ── Strip JSON wrapper from bot responses ────────────────────────
+    function stripJsonWrapper(text) {
+      if (!text) return text;
+      var s = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      try {
+        var p = JSON.parse(s);
+        if (p && typeof p.response === 'string') return p.response;
+      } catch(e) {}
+      // Fallback: extract response value with indexOf
+      var key = '"response":"';
+      var ki = s.indexOf(key);
+      if (ki === -1) { key = '"response": "'; ki = s.indexOf(key); }
+      if (ki >= 0) {
+        var vi = ki + key.length;
+        var ei = s.indexOf('"', vi);
+        if (ei > vi) return s.slice(vi, ei);
+      }
+      return text;
+    }
+
+    // ── Format time ─────────────────────────────────────────────────
+    function fmtTime(d) {
+      return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // ── State ───────────────────────────────────────────────────────
+    const welcomeScreen  = document.getElementById('welcomeScreen');
+    const messagesArea   = document.getElementById('messagesArea');
+    const messagesContainer = document.getElementById('messagesContainer');
+    let hasMessages = false;
+
+    function showChat() {
+      if (!hasMessages) {
+        welcomeScreen.style.display = 'none';
+        messagesArea.style.display = 'flex';
+        hasMessages = true;
+      }
+    }
+
+    // ── Mini bot SVG for avatars ────────────────────────────────────
+    const BOT_AVATAR_SVG = `<svg viewBox="0 0 200 240" width="20" height="20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <radialGradient id="av-body" cx="40%" cy="30%" r="70%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#b8d9f0"/></radialGradient>
+        <radialGradient id="av-eye" cx="35%" cy="30%" r="65%"><stop offset="0%" stop-color="#80deea"/><stop offset="100%" stop-color="#006064"/></radialGradient>
+      </defs>
+      <rect x="55" y="38" width="90" height="70" rx="20" fill="url(#av-body)"/>
+      <rect x="62" y="82" width="76" height="24" rx="8" fill="rgba(0,10,35,0.9)"/>
+      <rect x="66" y="55" width="28" height="18" rx="5" fill="url(#av-eye)" stroke="rgba(0,212,255,0.9)" stroke-width="1.5"/>
+      <rect x="106" y="55" width="28" height="18" rx="5" fill="url(#av-eye)" stroke="rgba(0,212,255,0.9)" stroke-width="1.5"/>
+      <line x1="100" y1="10" x2="100" y2="38" stroke="#4dd0e1" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="100" cy="8" r="5" fill="#00d4ff"/>
+    </svg>`;
+
+    // ── UI Density toggle ───────────────────────────────────────────
+    (function () {
+      const KEY = 'astrobot_density';
+      function apply(d) {
+        document.body.setAttribute('data-density', d);
+        document.querySelectorAll('.density-btn').forEach((b) => {
+          b.classList.toggle('active', b.dataset.density === d);
+        });
+      }
+      apply(localStorage.getItem(KEY) || 'comfortable');
+      document.querySelectorAll('.density-btn').forEach((b) => {
+        b.addEventListener('click', () => {
+          const d = b.dataset.density;
+          localStorage.setItem(KEY, d);
+          apply(d);
+        });
+      });
+    })();
+
+    // ── Theme toggle ────────────────────────────────────────────────
+    (function () {
+      const saved = localStorage.getItem('astrobot_theme') || 'dark';
+      document.body.setAttribute('data-theme', saved);
+      const dark = document.querySelector('.theme-icon-dark');
+      const light = document.querySelector('.theme-icon-light');
+      const hljsTheme = document.getElementById('hljsTheme');
+      function apply(theme) {
+        document.body.setAttribute('data-theme', theme);
+        if (dark) dark.style.display = theme === 'dark' ? '' : 'none';
+        if (light) light.style.display = theme === 'dark' ? 'none' : '';
+        if (hljsTheme) {
+          hljsTheme.href = theme === 'dark'
+            ? 'https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/atom-one-dark.min.css'
+            : 'https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/atom-one-light.min.css';
+        }
+        if (window.mermaid) {
+          try { window.mermaid.initialize({ startOnLoad: false, theme: theme === 'dark' ? 'dark' : 'default', securityLevel: 'strict' }); } catch (_) {}
+        }
+      }
+      apply(saved);
+      document.getElementById('themeToggle').addEventListener('click', () => {
+        const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('astrobot_theme', next);
+        apply(next);
+      });
+    })();
+
+    // ── Persona ─────────────────────────────────────────────────────
+    let currentPersona = localStorage.getItem('astrobot_persona') || 'default';
+    const personaSelect = document.getElementById('personaSelect');
+    const personaWrap = personaSelect.parentElement;
+    personaSelect.value = currentPersona;
+    personaWrap.setAttribute('data-current', currentPersona);
+    personaSelect.addEventListener('change', () => {
+      currentPersona = personaSelect.value;
+      localStorage.setItem('astrobot_persona', currentPersona);
+      personaWrap.setAttribute('data-current', currentPersona);
+      showToast('Persona: ' + personaSelect.options[personaSelect.selectedIndex].text, 'info');
+    });
+
+    // ── Attachment state (multiple) ─────────────────────────────────
+    let pendingAttachments = []; // array of { name, mime, size, data (base64) }
+    const fileInput = document.getElementById('fileInput');
+    const attachBtn = document.getElementById('attachBtn');
+    const chipsContainer = document.getElementById('attachmentChips');
+
+    const MAX_ATTACH_BYTES = 10 * 1024 * 1024; // 10 MB each
+    const MAX_ATTACHMENTS = 5;
+
+    function humanFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function renderChips() {
+      chipsContainer.innerHTML = '';
+      pendingAttachments.forEach((att, i) => {
+        const chip = document.createElement('div');
+        chip.className = 'attachment-chip';
+        chip.innerHTML =
+          '<div class="attachment-chip-icon" aria-hidden="true">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+          '<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>' +
+          '</svg></div>' +
+          '<div class="attachment-chip-info">' +
+          '<div class="attachment-chip-name">' + escapeHtml(att.name) + '</div>' +
+          '<div class="attachment-chip-size">' + humanFileSize(att.size) + '</div>' +
+          '</div>' +
+          '<button type="button" class="attachment-chip-remove" aria-label="Remove attachment">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
+          '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>' +
+          '</svg></button>';
+        chip.querySelector('.attachment-chip-remove').addEventListener('click', () => {
+          pendingAttachments.splice(i, 1);
+          renderChips();
+          updateSendState();
+        });
+        chipsContainer.appendChild(chip);
+      });
+    }
+
+    function addFile(file) {
+      if (!file) return;
+      if (pendingAttachments.length >= MAX_ATTACHMENTS) {
+        showToast('Max ' + MAX_ATTACHMENTS + ' files at once.', 'error');
+        return;
+      }
+      if (file.size > MAX_ATTACH_BYTES) {
+        showToast('"' + file.name + '" exceeds 10 MB.', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result || '';
+        const base64 = String(dataUrl).split(',')[1] || '';
+        pendingAttachments.push({
+          name: file.name,
+          mime: file.type || 'application/octet-stream',
+          size: file.size,
+          data: base64,
+        });
+        renderChips();
+        updateSendState();
+      };
+      reader.onerror = () => showToast('Could not read "' + file.name + '".', 'error');
+      reader.readAsDataURL(file);
+    }
+
+    function clearAttachments() {
+      pendingAttachments = [];
+      fileInput.value = '';
+      renderChips();
+      updateSendState();
+    }
+
+    attachBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files || []);
+      files.forEach(addFile);
+      fileInput.value = ''; // reset so the same file can be reselected
+    });
+
+    // ── Drag & drop ─────────────────────────────────────────────────
+    (function () {
+      const dropOverlay = document.getElementById('dropOverlay');
+      const chatMain = document.querySelector('.chat-main');
+      let dragDepth = 0;
+
+      function isFileDrag(e) {
+        return e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+      }
+
+      window.addEventListener('dragenter', (e) => {
+        if (!isFileDrag(e)) return;
+        e.preventDefault();
+        dragDepth++;
+        dropOverlay.classList.add('show');
+      });
+      window.addEventListener('dragover', (e) => {
+        if (!isFileDrag(e)) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+      });
+      window.addEventListener('dragleave', (e) => {
+        if (!isFileDrag(e)) return;
+        dragDepth = Math.max(0, dragDepth - 1);
+        if (dragDepth === 0) dropOverlay.classList.remove('show');
+      });
+      window.addEventListener('drop', (e) => {
+        if (!isFileDrag(e)) return;
+        e.preventDefault();
+        dragDepth = 0;
+        dropOverlay.classList.remove('show');
+        const files = Array.from(e.dataTransfer.files || []);
+        files.forEach(addFile);
+      });
+    })();
+
+    // ── Download helper ─────────────────────────────────────────────
+    function downloadDataUrl(dataUrl, filename) {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = filename || 'download';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => a.remove(), 100);
+    }
+
+    // ── Enhance bot bubble: KaTeX math + highlight.js + mermaid ─────
+    function enhanceBotBubble(bubble) {
+      if (!bubble) return;
+
+      // 1. Mermaid blocks: <pre><code class="language-mermaid">...</code></pre>
+      if (window.mermaid) {
+        bubble.querySelectorAll('pre code.language-mermaid, code.language-mermaid').forEach((codeEl) => {
+          const pre = codeEl.closest('pre') || codeEl;
+          const source = codeEl.textContent || '';
+          if (!source.trim()) return;
+          const container = document.createElement('div');
+          container.className = 'mermaid-container';
+          container.textContent = source;
+          pre.replaceWith(container);
+        });
+        const mermaidBlocks = bubble.querySelectorAll('.mermaid-container');
+        if (mermaidBlocks.length) {
+          mermaidBlocks.forEach(async (el, i) => {
+            try {
+              const { svg } = await window.mermaid.render('mmd-' + Date.now() + '-' + i, el.textContent);
+              el.innerHTML = svg;
+            } catch (err) {
+              el.innerHTML = '<div style="color:#fca5a5;font-size:0.82rem;">Mermaid diagram failed to render.</div>';
+            }
+          });
+        }
+      }
+
+      // 2. Code highlighting
+      if (window.hljs) {
+        bubble.querySelectorAll('pre code').forEach((el) => {
+          if (el.classList.contains('language-mermaid')) return;
+          try { window.hljs.highlightElement(el); } catch (_) {}
+        });
+      }
+
+      // 3. KaTeX math ($...$ and $$...$$)
+      if (window.renderMathInElement) {
+        try {
+          window.renderMathInElement(bubble, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '\\[', right: '\\]', display: true },
+              { left: '$', right: '$', display: false },
+              { left: '\\(', right: '\\)', display: false },
+            ],
+            throwOnError: false,
+          });
+        } catch (_) {}
+      }
+    }
+
+    // ── Language detection (very simple heuristic) ─────────────────
+    function detectLang(text) {
+      if (!text) return null;
+      const t = text.toLowerCase();
+      if (/[а-я]/.test(t)) return 'ru';
+      if (/[一-龯]/.test(t)) return 'zh';
+      if (/[가-힣]/.test(t)) return 'ko';
+      if (/[ぁ-ゔァ-ヴー々〆〤]/.test(t)) return 'ja';
+      if (/[α-ωΑ-Ω]/.test(t)) return 'el';
+      if (/[ا-ي]/.test(t)) return 'ar';
+      if (/\b(le|la|les|un|une|des|et|est|sont|je|tu|nous|vous|pour|avec|sans|mais|ou|donc)\b/.test(t)) return 'fr';
+      if (/\b(el|la|los|las|un|una|unos|unas|y|es|son|yo|tu|nosotros|para|con|pero|porque)\b/.test(t)) return 'es';
+      if (/\b(der|die|das|und|ist|sind|ich|du|wir|für|mit|ohne|aber|oder|weil)\b/.test(t)) return 'de';
+      if (/\b(the|and|is|are|i|you|we|they|for|with|without|but|or|because)\b/.test(t)) return 'en';
+      return null;
+    }
+
+    // ── Text-to-Speech helper ───────────────────────────────────────
+    const ttsState = { utterance: null, btn: null };
+    function speak(text, btn) {
+      if (!window.speechSynthesis) {
+        showToast('Text-to-speech is not supported in this browser.', 'error');
+        return;
+      }
+      // If same button clicked while speaking, stop
+      if (ttsState.utterance && ttsState.btn === btn) {
+        window.speechSynthesis.cancel();
+        ttsState.utterance = null;
+        if (ttsState.btn) ttsState.btn.classList.remove('active');
+        ttsState.btn = null;
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text.replace(/[*_`#>]/g, ''));
+      const lang = detectLang(text);
+      u.lang = lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : lang === 'de' ? 'de-DE' : 'en-US';
+      u.rate = 1.0;
+      u.pitch = 1.0;
+      u.onend = () => {
+        if (ttsState.btn) ttsState.btn.classList.remove('active');
+        ttsState.utterance = null;
+        ttsState.btn = null;
+      };
+      u.onerror = u.onend;
+      ttsState.utterance = u;
+      ttsState.btn = btn;
+      if (btn) btn.classList.add('active');
+      window.speechSynthesis.speak(u);
+    }
+
+    // Last user send (for Regenerate)
+    let lastUserSend = null; // { text, attachments }
+
+    // ── Add message to UI ───────────────────────────────────────────
+    function addMessage(type, text, audioBlob, imageUrl, attachmentMeta, pdfMeta, options) {
+      options = options || {};
+      showChat();
+      const div = document.createElement('div');
+      div.className = 'message ' + type + '-msg';
+
+      const avDiv = document.createElement('div');
+      avDiv.className = 'msg-avatar ' + (type === 'user' ? 'user-av' : 'bot-av');
+      avDiv.setAttribute('aria-hidden', 'true');
+      if (type === 'user') {
+        applyAvatarTo(avDiv);
+      } else {
+        avDiv.innerHTML = BOT_AVATAR_SVG;
+      }
+
+      let audioHTML = '';
+      if (audioBlob && type === 'user') {
+        const url = URL.createObjectURL(audioBlob);
+        audioHTML = '<div class="msg-audio"><div class="msg-audio-label">🎙️ Audio message</div><audio controls src="' + url + '"></audio></div>';
+      }
+
+      let imageHTML = '';
+      if (imageUrl) {
+        imageHTML = '<div class="msg-image-container" style="margin-top:10px;">'
+          + '<img src="' + imageUrl + '" alt="Generated image" style="max-width:100%;border-radius:12px;border:1px solid rgba(0,212,255,0.3);display:block;" '
+          + 'onerror="this.style.display=\'none\'" />'
+          + '<div style="font-size:0.72rem;color:rgba(255,255,255,0.5);margin-top:4px;">🎨 Image générée par AstroBot</div>'
+          + '</div>';
+      }
+
+      // User-sent attachment preview
+      let attachmentHTML = '';
+      if (attachmentMeta && type === 'user') {
+        const isImage = (attachmentMeta.mime || '').startsWith('image/');
+        if (isImage && attachmentMeta.dataUrl) {
+          attachmentHTML = '<div class="msg-attachment">'
+            + '<img src="' + attachmentMeta.dataUrl + '" alt="' + escapeHtml(attachmentMeta.name) + '" />'
+            + '<div class="msg-attachment-meta">📷 ' + escapeHtml(attachmentMeta.name) + ' · ' + humanFileSize(attachmentMeta.size) + '</div>'
+            + '</div>';
+        } else {
+          attachmentHTML = '<div class="msg-file-chip">'
+            + '<div class="msg-file-chip-icon">📎</div>'
+            + '<div class="msg-file-chip-info">'
+            + '<div class="msg-file-chip-name">' + escapeHtml(attachmentMeta.name) + '</div>'
+            + '<div class="msg-file-chip-size">' + humanFileSize(attachmentMeta.size) + '</div>'
+            + '</div></div>';
+        }
+      }
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'msg-content';
+
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble';
+      const bodyHtml = (type === 'bot') ? renderMarkdown(text) : escapeHtml(text);
+      bubble.innerHTML = attachmentHTML + bodyHtml + audioHTML + imageHTML;
+
+      // PDF download card for bot messages
+      if (type === 'bot' && pdfMeta && pdfMeta.url) {
+        const pdfCard = document.createElement('div');
+        pdfCard.className = 'msg-pdf-card';
+        pdfCard.innerHTML =
+          '<div class="msg-pdf-icon">' +
+          '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+          '</div>' +
+          '<div class="msg-pdf-info">' +
+          '<div class="msg-pdf-name">' + escapeHtml(pdfMeta.filename || 'report.pdf') + '</div>' +
+          '<div class="msg-pdf-hint">Generated PDF · click to download</div>' +
+          '</div>' +
+          '<button class="msg-pdf-download" aria-label="Download PDF">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+          '</button>';
+        pdfCard.addEventListener('click', () => downloadDataUrl(pdfMeta.url, pdfMeta.filename || 'report.pdf'));
+        bubble.appendChild(pdfCard);
+      }
+
+      const meta = document.createElement('div');
+      meta.className = 'msg-meta';
+
+      const timeEl = document.createElement('span');
+      timeEl.className = 'msg-time';
+      timeEl.textContent = fmtTime(new Date());
+      meta.appendChild(timeEl);
+
+      // Action buttons
+      if (type === 'bot') {
+        // Copy
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-btn';
+        copyBtn.setAttribute('aria-label', 'Copy message');
+        copyBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy';
+        copyBtn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(text);
+            copyBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+            setTimeout(() => { copyBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy'; }, 2000);
+          } catch(e) { showToast('Could not copy.', 'error'); }
+        });
+        meta.appendChild(copyBtn);
+
+        // TTS (speak)
+        if (window.speechSynthesis) {
+          const ttsBtn = document.createElement('button');
+          ttsBtn.className = 'msg-action-btn tts-btn';
+          ttsBtn.setAttribute('aria-label', 'Read aloud');
+          ttsBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> Speak';
+          ttsBtn.addEventListener('click', () => speak(text, ttsBtn));
+          meta.appendChild(ttsBtn);
+        }
+
+        // Regenerate
+        const regenBtn = document.createElement('button');
+        regenBtn.className = 'msg-action-btn';
+        regenBtn.setAttribute('aria-label', 'Regenerate response');
+        regenBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Regenerate';
+        regenBtn.addEventListener('click', () => {
+          if (!lastUserSend) { showToast('Nothing to regenerate.', 'error'); return; }
+          // Remove this bot bubble from the DOM
+          div.remove();
+          // Re-send the same user text + attachments (don't re-add the user bubble)
+          sendMessage(lastUserSend.text, lastUserSend.attachments, { skipUserBubble: true });
+        });
+        meta.appendChild(regenBtn);
+      }
+
+      // Edit button for user messages
+      if (type === 'user') {
+        const editBtn = document.createElement('button');
+        editBtn.className = 'msg-action-btn';
+        editBtn.setAttribute('aria-label', 'Edit and resend');
+        editBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit';
+        editBtn.addEventListener('click', () => {
+          // Find the text node of the bubble
+          const textSpan = bubble;
+          const original = text;
+          textSpan.setAttribute('contenteditable', 'true');
+          textSpan.focus();
+          // Place caret at end
+          const range = document.createRange();
+          range.selectNodeContents(textSpan);
+          range.collapse(false);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+
+          function commit() {
+            const newText = textSpan.innerText.trim();
+            textSpan.removeAttribute('contenteditable');
+            textSpan.removeEventListener('blur', commit);
+            textSpan.removeEventListener('keydown', keyHandler);
+            if (!newText || newText === original) { textSpan.innerText = original; return; }
+            // Remove this user bubble + everything after it, then resend
+            const parent = div.parentNode;
+            let cur = div;
+            while (cur) {
+              const next = cur.nextSibling;
+              parent.removeChild(cur);
+              cur = next;
+            }
+            sendMessage(newText, null);
+          }
+          function keyHandler(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commit(); }
+            else if (e.key === 'Escape') { textSpan.innerText = original; textSpan.removeAttribute('contenteditable'); }
+          }
+          textSpan.addEventListener('blur', commit);
+          textSpan.addEventListener('keydown', keyHandler);
+        });
+        meta.appendChild(editBtn);
+      }
+
+      contentDiv.appendChild(bubble);
+      contentDiv.appendChild(meta);
+
+      div.appendChild(avDiv);
+      div.appendChild(contentDiv);
+
+      messagesArea.appendChild(div);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+      // Post-render: enhance bot bubbles with KaTeX / hljs / mermaid
+      if (type === 'bot') {
+        // Fake streaming: reveal text progressively for nicer UX
+        if (!options.skipStreaming && text && text.length > 40) {
+          const originalHtml = bubble.innerHTML;
+          bubble.classList.add('streaming');
+          // Temporarily clear then reveal char groups
+          const words = text.split(/(\s+)/);
+          let i = 0;
+          bubble.innerHTML = '';
+          const interval = setInterval(() => {
+            i += Math.max(1, Math.floor(words.length / 35));
+            if (i >= words.length) {
+              clearInterval(interval);
+              bubble.innerHTML = originalHtml;
+              bubble.classList.remove('streaming');
+              enhanceBotBubble(bubble);
+              // re-append any non-bubble children like pdf card
+              messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            } else {
+              bubble.textContent = words.slice(0, i).join('');
+              messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+          }, 30);
+        } else {
+          enhanceBotBubble(bubble);
+        }
+      }
+
+      return div;
+    }
+
+    // ── Typing indicator ────────────────────────────────────────────
+    function showTyping() {
+      const div = document.createElement('div');
+      div.className = 'typing-indicator';
+      div.id = 'typingIndicator';
+      const avDiv = document.createElement('div');
+      avDiv.className = 'msg-avatar bot-av';
+      avDiv.setAttribute('aria-hidden', 'true');
+      avDiv.innerHTML = BOT_AVATAR_SVG;
+      div.innerHTML = '';
+      div.appendChild(avDiv);
+      const dots = document.createElement('div');
+      dots.className = 'typing-dots';
+      dots.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+      div.appendChild(dots);
+      messagesArea.appendChild(div);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    function hideTyping() {
+      const t = document.getElementById('typingIndicator');
+      if (t) t.remove();
+    }
+
+    // ── Toast ───────────────────────────────────────────────────────
+    function showToast(msg, type) {
+      const c = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = 'toast toast-' + (type || 'info');
+      t.textContent = msg;
+      c.appendChild(t);
+      setTimeout(() => t.remove(), 4000);
+    }
+
+    // ── Load & render history sidebar ───────────────────────────────
+    let cachedSessions = [];
+
+    async function loadHistory() {
+      try {
+        const res = await fetch('/api/chat/sessions', { headers: { 'Authorization': 'Bearer ' + token } });
+        const data = await res.json();
+        cachedSessions = data.data || [];
+        renderHistorySidebar();
+      } catch(e) {}
+    }
+
+    // Tag colors (deterministic from string)
+    function tagColor(tag) {
+      const colors = ['#00d4ff', '#1a73e8', '#f4a623', '#00e676', '#d946ef', '#fb923c', '#10b981', '#a855f7'];
+      let h = 0;
+      for (let i = 0; i < (tag || '').length; i++) h = (h * 31 + tag.charCodeAt(i)) >>> 0;
+      return colors[h % colors.length];
+    }
+    let activeTagFilter = null; // null = show all
+
+    function renderTagFilter() {
+      const allTags = Array.from(new Set(cachedSessions.map((s) => s.tag).filter(Boolean))).sort();
+      const wrap = document.getElementById('tagFilterWrap');
+      if (allTags.length === 0) { wrap.innerHTML = ''; return; }
+      wrap.innerHTML =
+        '<button class="tag-chip ' + (activeTagFilter === null ? 'active' : '') + '" data-tag-filter="">All</button>' +
+        allTags.map((t) => {
+          const col = tagColor(t);
+          const sel = activeTagFilter === t ? 'active' : '';
+          return '<button class="tag-chip ' + sel + '" data-tag-filter="' + escapeHtml(t) + '" style="--tc:' + col + ';">' + escapeHtml(t) + '</button>';
+        }).join('');
+      wrap.querySelectorAll('[data-tag-filter]').forEach((b) => {
+        b.addEventListener('click', () => {
+          activeTagFilter = b.dataset.tagFilter || null;
+          renderHistorySidebar();
+          renderTagFilter();
+        });
+      });
+    }
+
+    async function setSessionTag(sessionId, tag) {
+      try {
+        const res = await fetch('/api/chat/sessions/' + encodeURIComponent(sessionId) + '/tag', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ tag }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          const s = cachedSessions.find((x) => x.session_id === sessionId);
+          if (s) s.tag = tag || null;
+          renderHistorySidebar();
+          renderTagFilter();
+          showToast(tag ? 'Tagged: ' + tag : 'Tag removed', 'success');
+        }
+      } catch (_) { showToast('Could not set tag.', 'error'); }
+    }
+
+    function promptForTag(currentTag) {
+      const t = prompt('Tag for this session (e.g. "Études", "Projet", "Perso") — empty to remove:', currentTag || '');
+      if (t === null) return null; // cancelled
+      return t.trim();
+    }
+
+    function renderHistorySidebar() {
+      const list = document.getElementById('historyList');
+      const sessions = activeTagFilter
+        ? cachedSessions.filter((s) => s.tag === activeTagFilter)
+        : cachedSessions;
+      if (sessions.length === 0) {
+        list.innerHTML = activeTagFilter
+          ? '<div class="history-empty"><div style="font-size:1.4rem;margin-bottom:8px;opacity:0.4;">🔍</div>No sessions tagged "' + escapeHtml(activeTagFilter) + '".</div>'
+          : '<div class="history-empty"><div style="font-size:1.4rem;margin-bottom:8px;opacity:0.4;">&#x1F30C;</div>No missions yet.<br/>Start chatting!</div>';
+        return;
+      }
+      list.innerHTML = '';
+      const today = new Date().toDateString();
+      sessions.forEach(s => {
+        const d = document.createElement('div');
+        d.className = 'history-item';
+        d.dataset.sessionId = s.session_id;
+        if (s.session_id === currentSessionId) d.classList.add('active');
+        const t = new Date(s.createdAt);
+        const dateStr = t.toDateString() === today ? 'Today' : t.toLocaleDateString('fr-FR', {day:'2-digit',month:'short'});
+        const raw = (s.first_message || '');
+        const msgText = raw.length > 28 ? raw.substring(0,28) + '…' : raw;
+        const tagBadge = s.tag
+          ? '<span class="history-item-tag" style="--tc:' + tagColor(s.tag) + ';">' + escapeHtml(s.tag) + '</span>'
+          : '';
+        d.innerHTML = '<span class="history-item-icon">&#x1F4AC;</span>'
+          + '<span class="history-item-text">' + escapeHtml(msgText) + '</span>'
+          + tagBadge
+          + '<span class="history-item-time">' + escapeHtml(dateStr) + '</span>'
+          + '<button class="history-tag-btn" aria-label="Set tag" title="Tag/folder">🏷️</button>'
+          + '<button class="history-delete-btn" aria-label="Delete" title="Delete">&#x2715;</button>';
+        d.querySelector('.history-delete-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteSession(s.session_id, d);
+        });
+        d.querySelector('.history-tag-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          const v = promptForTag(s.tag);
+          if (v !== null) setSessionTag(s.session_id, v);
+        });
+        d.addEventListener('click', () => {
+          document.querySelectorAll('.history-item.active').forEach(el=>el.classList.remove('active'));
+          d.classList.add('active');
+          openSession(s.session_id);
+        });
+        list.appendChild(d);
+      });
+      // Refresh the tag filter row whenever the sidebar redraws
+      renderTagFilter();
+    }
+
+    async function deleteSession(sessionId, itemEl) {
+      try {
+        const res = await fetch('/api/chat/sessions/' + encodeURIComponent(sessionId), {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (data.success) {
+          const wasActive = itemEl.classList.contains('active');
+          cachedSessions = cachedSessions.filter(s => s.session_id !== sessionId);
+          itemEl.remove();
+          if (cachedSessions.length === 0) {
+            document.getElementById('historyList').innerHTML = '<div class="history-empty"><div style="font-size:1.4rem;margin-bottom:8px;opacity:0.4;">&#x1F30C;</div>No missions yet.<br/>Start chatting!</div>';
+          }
+          if (wasActive || sessionId === currentSessionId) {
+            messagesArea.innerHTML = '';
+            welcomeScreen.style.display = 'flex';
+            messagesArea.style.display = 'none';
+            hasMessages = false;
+            setCurrentSession(newSessionId());
+          }
+          showToast('Conversation deleted.', 'success');
+        } else { showToast('Could not delete.', 'error'); }
+      } catch(e) { showToast('Could not delete.', 'error'); }
+    }
+
+    // ── Render a list of conversation records into the messages area ─
+    function renderConversations(conversations) {
+      messagesArea.innerHTML = '';
+      welcomeScreen.style.display = 'none';
+      messagesArea.style.display = 'flex';
+      hasMessages = true;
+
+      // Don't animate streaming for old messages
+      const histOpts = { skipStreaming: true };
+
+      conversations.forEach((c) => {
+        // User bubble: include any persisted attachment meta
+        const att = c.attachment || null;
+        const userAttMeta = (att && att.dataUrl) ? {
+          name: att.name || 'file',
+          mime: att.mime || 'application/octet-stream',
+          size: att.size || 0,
+          dataUrl: att.dataUrl,
+        } : null;
+        addMessage('user', c.message || '', null, null, userAttMeta, null, histOpts);
+
+        // Bot bubble: include any persisted image and/or PDF
+        if (c.response) {
+          const pdfMeta = c.pdf_url ? {
+            url: c.pdf_url,
+            filename: c.pdf_filename || 'report.pdf',
+          } : null;
+          addMessage('bot', stripJsonWrapper(c.response), null, c.image_url || null, null, pdfMeta, histOpts);
+        }
+      });
+
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Open a specific session by session_id — and make new messages append to it
+    async function openSession(sessionId) {
+      try {
+        const res = await fetch('/api/chat/session/' + encodeURIComponent(sessionId), { headers: { 'Authorization': 'Bearer ' + token } });
+        const data = await res.json();
+        const conversations = data.data || [];
+        renderConversations(conversations);
+        setCurrentSession(sessionId); // CRITICAL: future messages stay in this session
+      } catch(e) {
+        showToast('Could not load session.', 'error');
+      }
+    }
+
+    // Load all conversations into the chat view (kept for potential future use)
+    function openFullHistory() {
+      // Fetch full history from API and render
+      fetch('/api/chat/history', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(r => r.json())
+        .then(data => {
+          const conversations = (data.data || data.conversations || []).slice();
+          renderConversations(conversations);
+        })
+        .catch(() => showToast('Could not load history.', 'error'));
+    }
+
+    // ── Send text message ───────────────────────────────────────────
+    const textarea = document.getElementById('chatInput');
+    const sendBtn  = document.getElementById('sendBtn');
+
+    // Active request state (for Stop button)
+    let activeController = null;
+    const stopBtn = document.getElementById('stopBtn');
+
+    function setPendingUI(pending) {
+      sendBtn.hidden = !!pending;
+      stopBtn.hidden = !pending;
+    }
+
+    stopBtn.addEventListener('click', () => {
+      if (activeController) {
+        activeController.abort();
+        activeController = null;
+      }
+      setPendingUI(false);
+    });
+
+    async function sendMessage(text, attachmentsArg, opts) {
+      opts = opts || {};
+      const attachments = Array.isArray(attachmentsArg) ? attachmentsArg
+        : (attachmentsArg ? [attachmentsArg] : pendingAttachments.slice());
+      const hasText = text && text.trim().length > 0;
+      if (!hasText && attachments.length === 0) return;
+
+      // Build user message bubble
+      if (!opts.skipUserBubble) {
+        const firstAttMeta = attachments[0] ? {
+          name: attachments[0].name,
+          mime: attachments[0].mime,
+          size: attachments[0].size,
+          dataUrl: 'data:' + attachments[0].mime + ';base64,' + attachments[0].data,
+        } : null;
+        const userText = hasText ? text : (attachments.length > 0 ? '[Attachment sent]' : '');
+        addMessage('user', userText, null, null, firstAttMeta);
+        // For extra attachments (beyond the first) show more chips
+        for (let i = 1; i < attachments.length; i++) {
+          const a = attachments[i];
+          const meta = {
+            name: a.name, mime: a.mime, size: a.size,
+            dataUrl: 'data:' + a.mime + ';base64,' + a.data,
+          };
+          addMessage('user', '', null, null, meta);
+        }
+      }
+
+      // Track for Regenerate
+      lastUserSend = { text: hasText ? text : '', attachments: attachments.slice() };
+
+      textarea.value = '';
+      textarea.style.height = 'auto';
+      clearAttachments();
+
+      showTyping();
+      setPendingUI(true);
+      activeController = new AbortController();
+
+      try {
+        const payload = {
+          message: hasText ? text : '',
+          session_id: currentSessionId,
+          persona: currentPersona,
+        };
+        if (attachments.length === 1) payload.attachment = attachments[0];
+        else if (attachments.length > 1) payload.attachments = attachments;
+
+        const res = await fetch('/api/chat/message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify(payload),
+          signal: activeController.signal,
+        });
+        if (res.status === 401) { localStorage.clear(); window.location.href = '/login.html'; return; }
+        const data = await res.json();
+
+        hideTyping();
+        setPendingUI(false);
+        activeController = null;
+
+        const rawResponse = (data.response || (data.data && data.data.response)) || "I'm currently offline from my main systems. Please check back shortly, Commander.";
+        const response = stripJsonWrapper(rawResponse);
+        const imageUrl = data.data && data.data.image_url ? data.data.image_url : null;
+        const pdfMeta = (data.data && data.data.pdf_url) ? {
+          url: data.data.pdf_url,
+          filename: data.data.pdf_filename || 'report.pdf',
+        } : null;
+        addMessage('bot', response, null, imageUrl, null, pdfMeta);
+        loadHistory();
+      } catch(e) {
+        hideTyping();
+        setPendingUI(false);
+        activeController = null;
+        if (e && e.name === 'AbortError') {
+          addMessage('bot', '⏹️ Generation stopped, Commander.', null, null, null, null, { skipStreaming: true });
+        } else {
+          addMessage('bot', 'Connection error. Please check your network, Commander.', null, null, null, null, { skipStreaming: true });
+        }
+      }
+    }
+
+    // ── Send audio ──────────────────────────────────────────────────
+    async function sendAudio(blob) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result.split(',')[1];
+        addMessage('user', '🎙️ Audio message sent', blob);
+        showTyping();
+        try {
+          const data = await apiPost('/api/chat/message', { audio: base64, session_id: currentSessionId, message: '[Audio message]' });
+          hideTyping();
+          const rawResponse = (data.response || (data.data && data.data.response)) || 'Audio received. Processing your request, Commander.';
+          const response = stripJsonWrapper(rawResponse);
+          addMessage('bot', response);
+          loadHistory();
+        } catch(e) {
+          hideTyping();
+          addMessage('bot', 'Audio processing failed. Please try again.');
+        }
+      };
+      reader.readAsDataURL(blob);
+    }
+
+    // ── Input handlers ──────────────────────────────────────────────
+    function updateSendState() {
+      const hasText = textarea.value.trim().length > 0;
+      sendBtn.disabled = !hasText && pendingAttachments.length === 0;
+    }
+    textarea.addEventListener('input', () => {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 140) + 'px';
+      updateSendState();
+    });
+    textarea.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (!sendBtn.disabled) sendMessage(textarea.value);
+      }
+    });
+    sendBtn.addEventListener('click', () => sendMessage(textarea.value));
+
+    // ── Quick prompts ───────────────────────────────────────────────
+    document.querySelectorAll('.quick-prompt').forEach(btn => {
+      btn.addEventListener('click', () => sendMessage(btn.textContent.trim()));
+    });
+
+    // ── New chat ────────────────────────────────────────────────────
+    document.getElementById('newChatBtn').addEventListener('click', () => {
+      setCurrentSession(newSessionId());
+      messagesArea.innerHTML = '';
+      welcomeScreen.style.display = 'flex';
+      messagesArea.style.display = 'none';
+      hasMessages = false;
+      document.querySelectorAll('.history-item.active').forEach(el => el.classList.remove('active'));
+    });
+
+    // ── Audio recording ─────────────────────────────────────────────
+    let mediaRecorder = null;
+    let audioChunks   = [];
+    let isRecording   = false;
+    const micBtn         = document.getElementById('micBtn');
+    const recIndicator   = document.getElementById('recordingIndicator');
+    const recTimeEl      = document.getElementById('recTime');
+    let recInterval = null;
+    let recSeconds  = 0;
+
+    micBtn.addEventListener('click', async () => {
+      if (!isRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          audioChunks = [];
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+          mediaRecorder.onstop = () => {
+            stream.getTracks().forEach(t => t.stop());
+            const blob = new Blob(audioChunks, { type: 'audio/webm' });
+            sendAudio(blob);
+          };
+          mediaRecorder.start();
+          isRecording = true;
+          micBtn.classList.add('recording');
+          recIndicator.classList.add('show');
+          recSeconds = 0;
+          recTimeEl.textContent = '0:00';
+          recInterval = setInterval(() => {
+            recSeconds++;
+            const m = Math.floor(recSeconds / 60);
+            const s = recSeconds % 60;
+            recTimeEl.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+            if (recSeconds >= 60) stopRecording();
+          }, 1000);
+        } catch(e) {
+          showToast('Microphone access denied.', 'error');
+        }
+      } else {
+        stopRecording();
+      }
+    });
+
+    function stopRecording() {
+      if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        isRecording = false;
+        micBtn.classList.remove('recording');
+        recIndicator.classList.remove('show');
+        clearInterval(recInterval);
+      }
+    }
+
+    // ── Logout modal ────────────────────────────────────────────────
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      document.getElementById('logoutModal').classList.add('show');
+    });
+    document.getElementById('cancelLogout').addEventListener('click', () => {
+      document.getElementById('logoutModal').classList.remove('show');
+    });
+    document.getElementById('confirmLogout').addEventListener('click', () => {
+      localStorage.clear();
+      window.location.href = '/';
+    });
+    document.getElementById('logoutModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('logoutModal')) {
+        document.getElementById('logoutModal').classList.remove('show');
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') document.getElementById('logoutModal').classList.remove('show');
+    });
+
+    // ── Settings modal ──────────────────────────────────────────────
+    const settingsModal = document.getElementById('settingsModal');
+
+    function openSettings() {
+      document.getElementById('settingsName').value = user.name || '';
+      document.getElementById('settingsSurname').value = user.surname || '';
+      document.getElementById('settingsEmail').value = user.email || '';
+      ['profileAlert','securityAlert'].forEach(id => {
+        const el = document.getElementById(id);
+        el.className = 'alert';
+        el.textContent = '';
+      });
+      ['currentPassword','newPassword','confirmNewPassword'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('pwMatchIndicator').textContent = '';
+      // Refresh avatar preview to current state
+      renderAvatarPreview();
+      switchSettingsTab('profile');
+      settingsModal.classList.add('show');
+    }
+
+    // ── Avatar preview in settings ──────────────────────────────────
+    const avatarPreviewEl = document.getElementById('avatarPreview');
+    const avatarPreviewInitialsEl = document.getElementById('avatarPreviewInitials');
+    const avatarRemoveBtn = document.getElementById('avatarRemoveBtn');
+    function renderAvatarPreview() {
+      avatarPreviewEl.innerHTML = '';
+      if (user.avatar) {
+        const img = document.createElement('img');
+        img.src = user.avatar;
+        img.alt = 'Profile photo';
+        avatarPreviewEl.appendChild(img);
+        avatarRemoveBtn.hidden = false;
+      } else {
+        const span = document.createElement('span');
+        span.className = 'avatar-preview-initials';
+        span.textContent = initials;
+        avatarPreviewEl.appendChild(span);
+        avatarRemoveBtn.hidden = true;
+      }
+    }
+    renderAvatarPreview();
+
+    // ── Cropper.js workflow ─────────────────────────────────────────
+    const avatarFileInput = document.getElementById('avatarFileInput');
+    const avatarChooseBtn = document.getElementById('avatarChooseBtn');
+    const cropModal = document.getElementById('cropModal');
+    const cropImage = document.getElementById('cropImage');
+    const cropClose = document.getElementById('cropClose');
+    const cropCancel = document.getElementById('cropCancel');
+    const cropSave = document.getElementById('cropSave');
+    let cropper = null;
+
+    avatarChooseBtn.addEventListener('click', () => avatarFileInput.click());
+    avatarFileInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { showToast('Photo too large (max 5 MB).', 'error'); return; }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        cropImage.src = ev.target.result;
+        cropModal.classList.add('show');
+        // Initialize Cropper after image is in DOM
+        setTimeout(() => {
+          if (cropper) { cropper.destroy(); cropper = null; }
+          if (!window.Cropper) {
+            showToast('Cropper library failed to load.', 'error');
+            return;
+          }
+          cropper = new window.Cropper(cropImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: 'move',
+            background: false,
+            autoCropArea: 1,
+            responsive: true,
+            zoomable: true,
+            scalable: true,
+            cropBoxResizable: true,
+          });
+        }, 50);
+      };
+      reader.readAsDataURL(file);
+      avatarFileInput.value = ''; // allow re-selecting same file
+    });
+
+    function closeCropModal() {
+      cropModal.classList.remove('show');
+      if (cropper) { cropper.destroy(); cropper = null; }
+    }
+    cropClose.addEventListener('click', closeCropModal);
+    cropCancel.addEventListener('click', closeCropModal);
+    cropModal.addEventListener('click', (e) => { if (e.target === cropModal) closeCropModal(); });
+
+    // Toolbar actions on cropper
+    document.querySelectorAll('.crop-tool-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (!cropper) return;
+        const action = btn.getAttribute('data-action');
+        switch (action) {
+          case 'zoom-in':      cropper.zoom(0.1); break;
+          case 'zoom-out':     cropper.zoom(-0.1); break;
+          case 'rotate-left':  cropper.rotate(-90); break;
+          case 'rotate-right': cropper.rotate(90); break;
+          case 'flip-h': {
+            const data = cropper.getData();
+            cropper.scaleX(data.scaleX === -1 ? 1 : -1);
+            break;
+          }
+          case 'reset':        cropper.reset(); break;
+        }
+      });
+    });
+
+    cropSave.addEventListener('click', async () => {
+      if (!cropper) return;
+      cropSave.disabled = true;
+      const oldHtml = cropSave.innerHTML;
+      cropSave.innerHTML = '<span class="spinner"></span>';
+      try {
+        // Output 384x384 JPEG quality 0.85 → typically 30-80 KB
+        const canvas = cropper.getCroppedCanvas({
+          width: 384,
+          height: 384,
+          imageSmoothingEnabled: true,
+          imageSmoothingQuality: 'high',
+        });
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        const res = await fetch('/api/auth/avatar', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ avatar: dataUrl }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Save failed');
+        user.avatar = data.avatar;
+        localStorage.setItem('astrobot_user', JSON.stringify(user));
+        renderAvatarPreview();
+        refreshAllAvatars();
+        showToast('Profile photo updated!', 'success');
+        closeCropModal();
+      } catch (err) {
+        showToast('Could not save photo: ' + err.message, 'error');
+      } finally {
+        cropSave.disabled = false;
+        cropSave.innerHTML = oldHtml;
+      }
+    });
+
+    avatarRemoveBtn.addEventListener('click', async () => {
+      if (!confirm('Remove your profile photo?')) return;
+      try {
+        const res = await fetch('/api/auth/avatar', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ avatar: null }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Remove failed');
+        user.avatar = null;
+        localStorage.setItem('astrobot_user', JSON.stringify(user));
+        renderAvatarPreview();
+        refreshAllAvatars();
+        showToast('Profile photo removed.', 'info');
+      } catch (err) {
+        showToast('Could not remove photo: ' + err.message, 'error');
+      }
+    });
+
+    function switchSettingsTab(tab) {
+      document.querySelectorAll('.settings-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+      document.querySelectorAll('.settings-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+    }
+
+    document.getElementById('settingsBtn').addEventListener('click', openSettings);
+    document.getElementById('closeSettings').addEventListener('click', () => settingsModal.classList.remove('show'));
+    settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.classList.remove('show'); });
+    document.querySelectorAll('.settings-tab').forEach(tab => tab.addEventListener('click', () => switchSettingsTab(tab.dataset.tab)));
+
+    settingsModal.querySelectorAll('.input-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const inp = document.getElementById(btn.dataset.target);
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+        btn.textContent = inp.type === 'password' ? '👁️' : '🙈';
+      });
+    });
+
+    ['newPassword','confirmNewPassword'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        const np = document.getElementById('newPassword').value;
+        const cp = document.getElementById('confirmNewPassword').value;
+        const ind = document.getElementById('pwMatchIndicator');
+        if (!cp) { ind.textContent = ''; return; }
+        if (np === cp) { ind.className = 'match-indicator match-ok'; ind.textContent = '✓ Passwords match'; }
+        else { ind.className = 'match-indicator match-bad'; ind.textContent = '✗ Passwords do not match'; }
+      });
+    });
+
+    function showSettingsAlert(panelId, msg, type) {
+      const el = document.getElementById(panelId);
+      el.className = 'alert show alert-' + type;
+      el.textContent = msg;
+    }
+
+    document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('saveProfileBtn');
+      const name = document.getElementById('settingsName').value.trim();
+      const surname = document.getElementById('settingsSurname').value.trim();
+      if (!name || !surname) { showSettingsAlert('profileAlert', 'Please fill in all fields.', 'error'); return; }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+      try {
+        const res = await fetch('/api/auth/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ name, surname })
+        });
+        const data = await res.json();
+        if (data.success) {
+          user.name = data.user.name;
+          user.surname = data.user.surname;
+          localStorage.setItem('astrobot_user', JSON.stringify(data.user));
+          localStorage.setItem('astrobot_token', data.token);
+          const newInitials = (data.user.name[0] + data.user.surname[0]).toUpperCase();
+          document.getElementById('userName').textContent = data.user.name + ' ' + data.user.surname;
+          document.getElementById('userInitials').textContent = newInitials;
+          document.getElementById('welcomeName').textContent = data.user.name + '!';
+          showSettingsAlert('profileAlert', 'Profile updated successfully!', 'success');
+          showToast('Profile updated!', 'success');
+        } else {
+          showSettingsAlert('profileAlert', data.error || 'Update failed.', 'error');
+        }
+      } catch(e) {
+        showSettingsAlert('profileAlert', 'Connection error. Please try again.', 'error');
+      }
+      btn.disabled = false;
+      btn.textContent = 'Save Changes';
+    });
+
+    document.getElementById('savePasswordBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('savePasswordBtn');
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+      if (!currentPassword || !newPassword || !confirmNewPassword) {
+        showSettingsAlert('securityAlert', 'Please fill in all fields.', 'error'); return;
+      }
+      if (newPassword !== confirmNewPassword) {
+        showSettingsAlert('securityAlert', 'New passwords do not match.', 'error'); return;
+      }
+      if (newPassword.length < 8) {
+        showSettingsAlert('securityAlert', 'New password must be at least 8 characters.', 'error'); return;
+      }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+      try {
+        const res = await fetch('/api/auth/password', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showSettingsAlert('securityAlert', 'Password changed successfully!', 'success');
+          showToast('Password changed!', 'success');
+          ['currentPassword','newPassword','confirmNewPassword'].forEach(id => { document.getElementById(id).value = ''; });
+          document.getElementById('pwMatchIndicator').textContent = '';
+        } else {
+          showSettingsAlert('securityAlert', data.error || 'Failed to change password.', 'error');
+        }
+      } catch(e) {
+        showSettingsAlert('securityAlert', 'Connection error. Please try again.', 'error');
+      }
+      btn.disabled = false;
+      btn.textContent = 'Change Password';
+    });
+
+    // ── Shooting stars ──────────────────────────────────────────────
+    (function() {
+      const NUM = 6;
+      const stars = [];
+      for (let i = 0; i < NUM; i++) {
+        const el = document.createElement('div');
+        el.className = 'shooting-star';
+        document.body.appendChild(el);
+        stars.push(el);
+      }
+      function launchStar(el) {
+        const startX = Math.random() * window.innerWidth;
+        const startY = Math.random() * window.innerHeight * 0.6;
+        const angle  = 15 + Math.random() * 25; // degrees, slightly downward
+        const dist   = 200 + Math.random() * 400;
+        const rad    = angle * Math.PI / 180;
+        const tx     = Math.cos(rad) * dist;
+        const ty     = Math.sin(rad) * dist;
+        const dur    = 1.2 + Math.random() * 1.8;
+        el.style.cssText = `
+          position:fixed; top:${startY}px; left:${startX}px;
+          opacity:0; z-index:0; pointer-events:none;
+          --angle:${angle}deg; --tx:${tx}px; --ty:${ty}px;
+          animation: shoot ${dur}s linear forwards;
+        `;
+        el.addEventListener('animationend', () => {
+          el.style.animation = 'none';
+          const delay = 3000 + Math.random() * 8000;
+          setTimeout(() => launchStar(el), delay);
+        }, { once: true });
+      }
+      stars.forEach((el, i) => {
+        setTimeout(() => launchStar(el), i * 2500 + Math.random() * 3000);
+      });
+    })();
+
+    // ── Mobile sidebar drawer ───────────────────────────────────────
+    (function () {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      const menuBtn = document.getElementById('chatMenuBtn');
+      const closeBtn = document.getElementById('sidebarCloseBtn');
+
+      function openDrawer() {
+        sidebar.classList.add('sidebar-open');
+        overlay.classList.add('show');
+        menuBtn.setAttribute('aria-expanded', 'true');
+        document.body.classList.add('drawer-open');
+      }
+      function closeDrawer() {
+        sidebar.classList.remove('sidebar-open');
+        overlay.classList.remove('show');
+        menuBtn.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('drawer-open');
+      }
+
+      menuBtn.addEventListener('click', openDrawer);
+      closeBtn.addEventListener('click', closeDrawer);
+      overlay.addEventListener('click', closeDrawer);
+
+      // Auto-close on actions inside the drawer
+      ['newChatBtn', 'settingsBtn', 'logoutBtn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', () => {
+          if (window.matchMedia('(max-width: 768px)').matches) closeDrawer();
+        });
+      });
+      document.getElementById('historyList').addEventListener('click', (e) => {
+        if (e.target.closest('.history-item') && !e.target.closest('.history-delete-btn')) {
+          if (window.matchMedia('(max-width: 768px)').matches) closeDrawer();
+        }
+      });
+
+      // Close on Escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && sidebar.classList.contains('sidebar-open')) closeDrawer();
+      });
+    })();
+
+    // ── Sidebar history search ──────────────────────────────────────
+    (function () {
+      const input = document.getElementById('sidebarSearch');
+      const clearBtn = document.getElementById('sidebarSearchClear');
+      input.addEventListener('input', () => {
+        const q = input.value.trim().toLowerCase();
+        clearBtn.hidden = q.length === 0;
+        document.querySelectorAll('#historyList .history-item').forEach((el) => {
+          const txt = (el.querySelector('.history-item-text') || {}).textContent || '';
+          el.style.display = !q || txt.toLowerCase().includes(q) ? '' : 'none';
+        });
+      });
+      clearBtn.addEventListener('click', () => {
+        input.value = '';
+        clearBtn.hidden = true;
+        input.dispatchEvent(new Event('input'));
+        input.focus();
+      });
+    })();
+
+    // ── Export conversation menu ────────────────────────────────────
+    (function () {
+      const btn = document.getElementById('exportBtn');
+      const menu = document.getElementById('exportMenu');
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menu.hidden = !menu.hidden;
+      });
+      document.addEventListener('click', () => { menu.hidden = true; });
+      menu.addEventListener('click', (e) => e.stopPropagation());
+
+      menu.querySelectorAll('[data-format]').forEach((item) => {
+        item.addEventListener('click', async () => {
+          menu.hidden = true;
+          const fmt = item.getAttribute('data-format');
+          try {
+            const res = await fetch('/api/chat/export/' + encodeURIComponent(currentSessionId) + '?format=' + fmt, {
+              headers: { 'Authorization': 'Bearer ' + token },
+            });
+            if (!res.ok) { showToast('Nothing to export yet.', 'error'); return; }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const ext = fmt === 'md' ? 'md' : fmt === 'json' ? 'json' : 'pdf';
+            a.href = url;
+            a.download = 'astrobot-conversation.' + ext;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 200);
+            showToast('Export ready: ' + ext.toUpperCase(), 'success');
+          } catch (err) {
+            showToast('Export failed.', 'error');
+          }
+        });
+      });
+    })();
+
+    // ════════════════════════════════════════════════════════════════
+    // TOOLS MODAL (Notebook/RAG, YouTube, Image-edit, Workflows)
+    // ════════════════════════════════════════════════════════════════
+    const toolsModal = document.getElementById('toolsModal');
+    document.getElementById('toolsBtn').addEventListener('click', () => {
+      toolsModal.classList.add('show');
+      switchToolsTab('notebook');
+      loadDocuments();
+      loadNotebookBinding();
+    });
+    document.getElementById('toolsClose').addEventListener('click', () => toolsModal.classList.remove('show'));
+    toolsModal.addEventListener('click', (e) => { if (e.target === toolsModal) toolsModal.classList.remove('show'); });
+
+    function switchToolsTab(tab) {
+      toolsModal.querySelectorAll('.settings-tab').forEach((t) => t.classList.toggle('active', t.dataset.toolsTab === tab));
+      toolsModal.querySelectorAll('.settings-panel').forEach((p) => p.classList.toggle('active', p.id === 'tools-panel-' + tab));
+      if (tab === 'workflows') loadWorkflows();
+    }
+    toolsModal.querySelectorAll('.settings-tab').forEach((t) => {
+      t.addEventListener('click', () => switchToolsTab(t.dataset.toolsTab));
+    });
+
+    // ── Notebook / RAG ──────────────────────────────────────────────
+    const notebookFileInput = document.getElementById('notebookFileInput');
+    document.getElementById('notebookUploadBtn').addEventListener('click', () => notebookFileInput.click());
+    notebookFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      if (file.size > 15 * 1024 * 1024) { showToast('File too large (max 15 MB).', 'error'); return; }
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const data = ev.target.result.split(',')[1];
+        showToast('Uploading + extracting + embedding...', 'info');
+        try {
+          const res = await fetch('/api/features/documents', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ name: file.name, mime: file.type, data }),
+          });
+          const r = await res.json();
+          if (r.success) {
+            showToast('Document uploaded (' + r.document.chunks_count + ' chunks)', 'success');
+            loadDocuments();
+          } else {
+            showToast(r.error || 'Upload failed', 'error');
+          }
+        } catch (err) { showToast('Upload error: ' + err.message, 'error'); }
+        notebookFileInput.value = '';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    async function loadDocuments() {
+      try {
+        const res = await fetch('/api/features/documents', { headers: { 'Authorization': 'Bearer ' + token } });
+        const data = await res.json();
+        const el = document.getElementById('documentsList');
+        if (!data.success || !data.documents.length) {
+          el.innerHTML = '<div class="docs-empty" style="text-align:center;padding:18px;color:var(--text-muted);font-size:0.86rem;">No documents yet.</div>';
+          return;
+        }
+        el.innerHTML = data.documents.map((d) => `
+          <div class="doc-item" data-id="${d.id}">
+            <div class="doc-item-info">
+              <div class="doc-item-name">📄 ${escapeHtml(d.name)}</div>
+              <div class="doc-item-meta">${(d.size/1024).toFixed(0)} KB · ${d.chunks_count} chunks</div>
+            </div>
+            <div class="doc-item-actions">
+              <button class="btn btn-primary btn-sm doc-bind-notebook" data-id="${d.id}" data-name="${escapeHtml(d.name)}" data-mode="notebook" title="Use full document as context">📚 Notebook</button>
+              <button class="btn btn-orange btn-sm doc-bind-notebook" data-id="${d.id}" data-name="${escapeHtml(d.name)}" data-mode="rag" title="Search relevant passages per question">🔎 RAG</button>
+              <button class="btn btn-ghost btn-sm doc-delete" data-id="${d.id}">🗑</button>
+            </div>
+          </div>
+        `).join('');
+        el.querySelectorAll('.doc-bind-notebook').forEach((b) => {
+          b.addEventListener('click', () => bindDocument(parseInt(b.dataset.id), b.dataset.mode, b.dataset.name));
+        });
+        el.querySelectorAll('.doc-delete').forEach((b) => {
+          b.addEventListener('click', async () => {
+            if (!confirm('Delete this document?')) return;
+            await fetch('/api/features/documents/' + b.dataset.id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+            loadDocuments();
+            loadNotebookBinding();
+          });
+        });
+      } catch (e) { console.error(e); }
+    }
+
+    async function bindDocument(documentId, mode, name) {
+      const res = await fetch('/api/features/notebook', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ session_id: currentSessionId, document_id: documentId, mode }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Bound: ' + name + ' (' + mode + ')', 'success');
+        loadNotebookBinding();
+      }
+    }
+
+    async function unbindDocument() {
+      const res = await fetch('/api/features/notebook', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ session_id: currentSessionId, document_id: null }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Document unbound', 'info');
+        loadNotebookBinding();
+      }
+    }
+
+    async function loadNotebookBinding() {
+      try {
+        const res = await fetch('/api/features/notebook?session_id=' + encodeURIComponent(currentSessionId), {
+          headers: { 'Authorization': 'Bearer ' + token },
+        });
+        const data = await res.json();
+        const el = document.getElementById('notebookCurrentBinding');
+        if (data.success && data.binding) {
+          el.hidden = false;
+          el.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+              <div>
+                <strong>📌 Active document for this session:</strong><br>
+                ${escapeHtml(data.binding.name)} <span style="color:var(--accent-cyan);font-size:0.78rem;">(${data.binding.mode})</span>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="unbindDocument()">Unbind</button>
+            </div>`;
+        } else {
+          el.hidden = true;
+        }
+      } catch (e) {}
+    }
+    window.unbindDocument = unbindDocument;
+
+    // ── YouTube summarizer ──────────────────────────────────────────
+    document.getElementById('ytFetchBtn').addEventListener('click', async () => {
+      const url = document.getElementById('ytUrl').value.trim();
+      if (!url) { showToast('Paste a YouTube URL.', 'error'); return; }
+      const btn = document.getElementById('ytFetchBtn');
+      btn.disabled = true; btn.textContent = 'Fetching...';
+      const result = document.getElementById('ytResult');
+      result.hidden = true;
+      try {
+        const res = await fetch('/api/features/youtube-transcript', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ url }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          result.hidden = false;
+          result.innerHTML = `<div style="font-size:0.86rem;margin-bottom:8px;">✓ Transcript fetched (${data.length} chars). Send a question — it will be answered using this transcript.</div>
+            <button class="btn btn-primary btn-sm" id="ytSummarizeBtn">📝 Ask for summary</button>`;
+          window.__ytTranscript = data.transcript;
+          document.getElementById('ytSummarizeBtn').addEventListener('click', () => {
+            toolsModal.classList.remove('show');
+            const prompt = `Summarize this YouTube video transcript in clear bullet points (key takeaways, main arguments, conclusion):\n\n"""\n${data.transcript.slice(0, 8000)}\n"""`;
+            sendMessage(prompt, null);
+          });
+        } else {
+          showToast(data.error || 'Fetch failed', 'error');
+        }
+      } catch (e) { showToast('Network error', 'error'); }
+      btn.disabled = false; btn.textContent = '📥 Fetch transcript';
+    });
+
+    // ── Image-to-image edit ─────────────────────────────────────────
+    let imgEditFile = null;
+    document.getElementById('imgEditChooseBtn').addEventListener('click', () => document.getElementById('imgEditInput').click());
+    document.getElementById('imgEditInput').addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      if (f.size > 8 * 1024 * 1024) { showToast('Image too large (max 8 MB).', 'error'); return; }
+      imgEditFile = f;
+      const r = new FileReader();
+      r.onload = (ev) => {
+        document.getElementById('imgEditPreview').innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
+        document.getElementById('imgEditRunBtn').disabled = false;
+      };
+      r.readAsDataURL(f);
+    });
+    document.getElementById('imgEditRunBtn').addEventListener('click', async () => {
+      if (!imgEditFile) return;
+      const prompt = document.getElementById('imgEditPrompt').value.trim();
+      if (!prompt) { showToast('Describe the transformation.', 'error'); return; }
+      const btn = document.getElementById('imgEditRunBtn');
+      btn.disabled = true; btn.textContent = 'Generating (~30s)...';
+      const r = new FileReader();
+      r.onload = async (ev) => {
+        const base64 = ev.target.result.split(',')[1];
+        try {
+          const res = await fetch('/api/features/image-edit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ image: base64, prompt, mime: imgEditFile.type }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            const result = document.getElementById('imgEditResult');
+            result.hidden = false;
+            result.innerHTML = `<img src="${data.image_url}" style="max-width:100%;border-radius:10px;border:1px solid var(--border);"><div style="margin-top:8px;"><a href="${data.image_url}" download="edited.jpg" class="btn btn-ghost btn-sm">⬇ Download</a></div>`;
+          } else {
+            showToast(data.error || 'Generation failed', 'error');
+          }
+        } catch (e) { showToast('Network error', 'error'); }
+        btn.disabled = false; btn.textContent = '🎨 Generate variation';
+      };
+      r.readAsDataURL(imgEditFile);
+    });
+
+    // ── Workflows ──────────────────────────────────────────────────
+    let wfStepsData = [{ prompt: '' }];
+
+    function renderWfSteps() {
+      const el = document.getElementById('wfSteps');
+      el.innerHTML = wfStepsData.map((s, i) => `
+        <div class="wf-step">
+          <div class="wf-step-num">${i + 1}</div>
+          <textarea class="input-field" data-i="${i}" rows="2" placeholder="${i === 0 ? 'Initial input or instructions' : 'Use {{prev}} to reference previous step output'}">${escapeHtml(s.prompt)}</textarea>
+          ${wfStepsData.length > 1 ? `<button class="btn btn-ghost btn-sm wf-step-del" data-i="${i}">×</button>` : ''}
+        </div>
+      `).join('');
+      el.querySelectorAll('textarea').forEach((ta) => {
+        ta.addEventListener('input', () => { wfStepsData[parseInt(ta.dataset.i)].prompt = ta.value; });
+      });
+      el.querySelectorAll('.wf-step-del').forEach((b) => {
+        b.addEventListener('click', () => { wfStepsData.splice(parseInt(b.dataset.i), 1); renderWfSteps(); });
+      });
+    }
+    renderWfSteps();
+    document.getElementById('wfAddStepBtn').addEventListener('click', () => {
+      wfStepsData.push({ prompt: '' });
+      renderWfSteps();
+    });
+
+    document.getElementById('wfSaveBtn').addEventListener('click', async () => {
+      const name = document.getElementById('wfName').value.trim();
+      if (!name) { showToast('Workflow name required.', 'error'); return; }
+      if (wfStepsData.every((s) => !s.prompt.trim())) { showToast('At least one step required.', 'error'); return; }
+      const res = await fetch('/api/features/workflows', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ name, steps: wfStepsData.filter((s) => s.prompt.trim()) }),
+      });
+      const data = await res.json();
+      if (data.success) { showToast('Workflow saved!', 'success'); loadWorkflows(); }
+    });
+
+    document.getElementById('wfRunBtn').addEventListener('click', async () => {
+      const steps = wfStepsData.filter((s) => s.prompt.trim());
+      if (steps.length === 0) { showToast('No steps to run.', 'error'); return; }
+      toolsModal.classList.remove('show');
+      showToast('Running ' + steps.length + ' steps...', 'info');
+      let prev = '';
+      for (let i = 0; i < steps.length; i++) {
+        const filledPrompt = steps[i].prompt.replace(/\{\{prev\}\}/g, prev);
+        addMessage('user', `**[Step ${i + 1}/${steps.length}]** ${filledPrompt}`, null, null, null, null, { skipStreaming: true });
+        showTyping();
+        try {
+          const res = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ message: filledPrompt, session_id: currentSessionId, persona: currentPersona }),
+          });
+          const data = await res.json();
+          hideTyping();
+          const r = stripJsonWrapper((data.data && data.data.response) || data.response || '');
+          addMessage('bot', r, null, data.data && data.data.image_url, null, null, { skipStreaming: true });
+          prev = r;
+        } catch (e) { hideTyping(); addMessage('bot', 'Step ' + (i + 1) + ' failed: ' + e.message); break; }
+      }
+      showToast('Workflow finished!', 'success');
+    });
+
+    async function loadWorkflows() {
+      try {
+        const res = await fetch('/api/features/workflows', { headers: { 'Authorization': 'Bearer ' + token } });
+        const data = await res.json();
+        const el = document.getElementById('workflowsList');
+        if (!data.success || !data.workflows.length) {
+          el.innerHTML = '<div style="text-align:center;padding:18px;color:var(--text-muted);font-size:0.86rem;">No workflows yet.</div>';
+          return;
+        }
+        el.innerHTML = data.workflows.map((w) => `
+          <div class="workflow-item">
+            <div>
+              <div style="font-weight:600;">${escapeHtml(w.name)}</div>
+              <div style="font-size:0.76rem;color:var(--text-muted);">${w.steps.length} step(s)</div>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-ghost btn-sm wf-load" data-id="${w.id}">Load</button>
+              <button class="btn btn-ghost btn-sm wf-del" data-id="${w.id}">🗑</button>
+            </div>
+          </div>
+        `).join('');
+        el.querySelectorAll('.wf-load').forEach((b) => {
+          b.addEventListener('click', () => {
+            const w = data.workflows.find((x) => x.id === parseInt(b.dataset.id));
+            document.getElementById('wfName').value = w.name;
+            wfStepsData = w.steps.length ? w.steps : [{ prompt: '' }];
+            renderWfSteps();
+          });
+        });
+        el.querySelectorAll('.wf-del').forEach((b) => {
+          b.addEventListener('click', async () => {
+            if (!confirm('Delete this workflow?')) return;
+            await fetch('/api/features/workflows/' + b.dataset.id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+            loadWorkflows();
+          });
+        });
+      } catch (e) {}
+    }
+
+    // ── Init ────────────────────────────────────────────────────────
+    loadHistory().then(() => {
+      // If the restored session has messages saved server-side, auto-open it
+      // so refreshing the page keeps the user in the same conversation.
+      const stillExists = cachedSessions.some((s) => s.session_id === currentSessionId);
+      if (stillExists) {
+        openSession(currentSessionId);
+        // Highlight it in the sidebar
+        setTimeout(() => {
+          const item = document.querySelector('.history-item[data-session-id="' + CSS.escape(currentSessionId) + '"]');
+          if (item) item.classList.add('active');
+        }, 50);
+      }
+    });
+    textarea.focus();
+
+    // ── Deliver any pending message from landing chatbar ────────────
+    (function () {
+      const pending = sessionStorage.getItem('astrobot_pending_message');
+      if (pending && pending.trim()) {
+        sessionStorage.removeItem('astrobot_pending_message');
+        setTimeout(() => sendMessage(pending), 250);
+      }
+    })();
+  </script>
+
+  <!-- External rendering libraries -->
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+  <script type="module">
+    // Mermaid via ESM so it's tree-shaken and loaded only here
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.esm.min.mjs';
+    window.mermaid = mermaid;
+    mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'strict' });
+  </script>
+</body>
+</html>

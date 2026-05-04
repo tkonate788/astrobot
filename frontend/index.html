@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AstroBot — Your intelligent space-powered AI assistant, built for commanders." />
+  <title>AstroBot — Your Intelligent Space Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&family=Exo+2:wght@300;400;600&display=swap" />
+  <link rel="stylesheet" href="style.css?v=4.3" />
+</head>
+<body class="landing-v2">
+
+  <!-- Star field background -->
+  <div class="stars-canvas" aria-hidden="true"></div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer" aria-live="assertive" aria-atomic="true"></div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       NAVIGATION
+       ═══════════════════════════════════════════════════════════════ -->
+  <nav class="nav-v2" role="navigation" aria-label="Main navigation">
+    <a href="#home" class="nav-v2-brand" aria-label="AstroBot home">
+      <svg width="34" height="34" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="nav-v2-robot">
+        <defs>
+          <radialGradient id="nv-body" cx="40%" cy="30%" r="70%">
+            <stop offset="0%" stop-color="#fff"/>
+            <stop offset="100%" stop-color="#b8d9f0"/>
+          </radialGradient>
+          <radialGradient id="nv-eye" cx="35%" cy="30%" r="65%">
+            <stop offset="0%" stop-color="#80deea"/>
+            <stop offset="100%" stop-color="#006064"/>
+          </radialGradient>
+        </defs>
+        <line x1="100" y1="10" x2="100" y2="40" stroke="#4dd0e1" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="100" cy="8" r="6" fill="#00d4ff"/>
+        <rect x="55" y="38" width="90" height="70" rx="20" fill="url(#nv-body)"/>
+        <rect x="66" y="55" width="28" height="18" rx="5" fill="#0d1b35"/>
+        <rect x="106" y="55" width="28" height="18" rx="5" fill="#0d1b35"/>
+        <rect x="68" y="57" width="24" height="14" rx="4" fill="url(#nv-eye)"/>
+        <rect x="108" y="57" width="24" height="14" rx="4" fill="url(#nv-eye)"/>
+        <rect x="50" y="118" width="100" height="80" rx="22" fill="url(#nv-body)"/>
+        <path d="M 58 125 Q 30 160 38 210 L 50 205 Q 52 175 62 155 Z" fill="#1a73e8" opacity="0.85"/>
+        <path d="M 142 125 Q 170 160 162 210 L 150 205 Q 148 175 138 155 Z" fill="#1a73e8" opacity="0.85"/>
+      </svg>
+      <span class="nav-v2-name">ASTROBOT</span>
+    </a>
+
+    <ul class="nav-v2-links" id="navLinks">
+      <li><a href="#home" class="nav-v2-link active" data-page="home">Home</a></li>
+      <li><a href="#features" class="nav-v2-link" data-page="features">Features</a></li>
+      <li><a href="#about" class="nav-v2-link" data-page="about">About</a></li>
+      <li class="nav-v2-mobile-ctas">
+        <a href="#" class="btn btn-outline btn-sm" id="mobileLoginBtn">Login</a>
+        <a href="register.html" class="btn btn-orange btn-sm">Get Started</a>
+      </li>
+    </ul>
+
+    <div class="nav-v2-actions">
+      <a href="#" class="btn btn-outline btn-sm" id="ctaLoginBtn">Login</a>
+      <a href="register.html" class="btn btn-orange btn-sm">Get Started</a>
+    </div>
+
+    <button class="nav-v2-burger" id="navBurger" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       HERO (central chat bar)
+       ═══════════════════════════════════════════════════════════════ -->
+  <section id="home" class="hero-v2 page page-active" aria-label="Hero">
+    <div class="hero-v2-inner">
+
+      <div class="hero-v2-badge">
+        <span class="hero-v2-badge-dot" aria-hidden="true"></span>
+        <span>V2.0 Online · Powered by AI</span>
+      </div>
+
+      <h1 class="hero-v2-title">
+        Meet <span class="hero-v2-title-grad">AstroBot</span><br/>
+        Your Intelligent Space Assistant
+      </h1>
+
+      <p class="hero-v2-sub">
+        Ask anything — from mission planning to the mysteries of the universe.
+        AstroBot is your AI-powered companion, available around the clock.
+      </p>
+
+      <!-- CENTRAL CHAT BAR -->
+      <form class="hero-chatbar" id="heroChatForm" autocomplete="off">
+        <div class="hero-chatbar-inner">
+          <svg class="hero-chatbar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          <input
+            type="text"
+            id="heroChatInput"
+            class="hero-chatbar-input"
+            placeholder="Ask AstroBot anything..."
+            maxlength="500"
+            aria-label="Ask AstroBot"
+          />
+          <button type="submit" class="hero-chatbar-send" aria-label="Send message">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+            <span>Send</span>
+          </button>
+        </div>
+        <div class="hero-chatbar-hint">
+          <kbd>Enter</kbd> to send · Login required to start a mission
+        </div>
+      </form>
+
+      <!-- Suggestion chips -->
+      <div class="hero-v2-chips" aria-label="Suggested prompts">
+        <button class="hero-v2-chip" data-prompt="Tell me something amazing about space">
+          🌌 Amazing space fact
+        </button>
+        <button class="hero-v2-chip" data-prompt="How does AI actually work?">
+          🤖 How does AI work?
+        </button>
+        <button class="hero-v2-chip" data-prompt="Plan a mission to Mars">
+          🚀 Mission to Mars
+        </button>
+        <button class="hero-v2-chip" data-prompt="Explain quantum computing simply">
+          ⚛️ Quantum computing
+        </button>
+      </div>
+
+      <!-- Stats -->
+      <div class="hero-v2-stats" aria-label="Statistics">
+        <div class="hero-v2-stat">
+          <span class="hero-v2-stat-val">24/7</span>
+          <span class="hero-v2-stat-lab">Available</span>
+        </div>
+        <div class="hero-v2-stat-sep" aria-hidden="true"></div>
+        <div class="hero-v2-stat">
+          <span class="hero-v2-stat-val">100+</span>
+          <span class="hero-v2-stat-lab">Users</span>
+        </div>
+        <div class="hero-v2-stat-sep" aria-hidden="true"></div>
+        <div class="hero-v2-stat">
+          <span class="hero-v2-stat-val">AI</span>
+          <span class="hero-v2-stat-lab">Powered</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decorative orbit rings -->
+    <div class="hero-v2-orbit hero-v2-orbit-1" aria-hidden="true"></div>
+    <div class="hero-v2-orbit hero-v2-orbit-2" aria-hidden="true"></div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       FEATURES
+       ═══════════════════════════════════════════════════════════════ -->
+  <section id="features" class="features-v2 page" aria-label="Features" hidden>
+    <div class="section-head">
+      <div class="section-eyebrow">Capabilities</div>
+      <h2 class="section-title">Built for <span class="section-title-grad">Commanders</span></h2>
+      <p class="section-sub">
+        A conversational AI co-pilot trained to help you explore, plan, and solve.
+      </p>
+    </div>
+
+    <div class="features-v2-grid">
+      <div class="feature-v2-card glass-card">
+        <div class="feature-v2-icon feature-v2-icon-cyan">⚡</div>
+        <h3 class="feature-v2-title">Instant Responses</h3>
+        <p class="feature-v2-desc">Sub-second answers powered by cutting-edge language models and retrieval systems.</p>
+      </div>
+      <div class="feature-v2-card glass-card">
+        <div class="feature-v2-icon feature-v2-icon-blue">🔒</div>
+        <h3 class="feature-v2-title">Secure &amp; Private</h3>
+        <p class="feature-v2-desc">JWT-based auth, hashed passwords, rate-limited APIs. Your missions stay classified.</p>
+      </div>
+      <div class="feature-v2-card glass-card">
+        <div class="feature-v2-icon feature-v2-icon-orange">🌐</div>
+        <h3 class="feature-v2-title">Space-grade AI</h3>
+        <p class="feature-v2-desc">Trained on vast knowledge plus n8n workflows to tackle any challenge you throw at it.</p>
+      </div>
+      <div class="feature-v2-card glass-card">
+        <div class="feature-v2-icon feature-v2-icon-green">🎨</div>
+        <h3 class="feature-v2-title">Image Generation</h3>
+        <p class="feature-v2-desc">Need a visual? AstroBot generates images on demand via Stable Diffusion.</p>
+      </div>
+      <div class="feature-v2-card glass-card">
+        <div class="feature-v2-icon feature-v2-icon-cyan">🎙️</div>
+        <h3 class="feature-v2-title">Voice Input</h3>
+        <p class="feature-v2-desc">Record audio directly in-app and get answers hands-free during your mission.</p>
+      </div>
+      <div class="feature-v2-card glass-card">
+        <div class="feature-v2-icon feature-v2-icon-blue">📋</div>
+        <h3 class="feature-v2-title">Full History</h3>
+        <p class="feature-v2-desc">Every conversation is saved and searchable so you never lose a thread.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       ABOUT (team + graduation project)
+       ═══════════════════════════════════════════════════════════════ -->
+  <section id="about" class="about-v2 page" aria-label="About" hidden>
+    <div class="section-head">
+      <div class="section-eyebrow">About the Project</div>
+      <h2 class="section-title">A <span class="section-title-grad">Graduation</span> Project</h2>
+      <p class="section-sub">
+        AstroBot is a university graduation project built by four students passionate about AI,
+        automation, and clean engineering. It combines a modern web stack (Node.js, Express,
+        PostgreSQL) with an n8n automation backbone and Stable Diffusion for image generation —
+        all wrapped in a space-themed conversational UI.
+      </p>
+    </div>
+
+    <div class="about-v2-meta glass-card">
+      <div class="about-v2-meta-item">
+        <span class="about-v2-meta-label">Type</span>
+        <span class="about-v2-meta-value">Graduation Project</span>
+      </div>
+      <div class="about-v2-meta-item">
+        <span class="about-v2-meta-label">Stack</span>
+        <span class="about-v2-meta-value">Node.js · Express · PostgreSQL · n8n</span>
+      </div>
+      <div class="about-v2-meta-item">
+        <span class="about-v2-meta-label">AI</span>
+        <span class="about-v2-meta-value">LLM + Stable Diffusion</span>
+      </div>
+      <div class="about-v2-meta-item">
+        <span class="about-v2-meta-label">Version</span>
+        <span class="about-v2-meta-value">V2.0 — 2026</span>
+      </div>
+    </div>
+
+    <div class="team-head">
+      <h3 class="team-title">The Team</h3>
+      <p class="team-sub">Built together by four developers</p>
+    </div>
+
+    <div class="team-grid">
+
+      <div class="team-card glass-card">
+        <div class="team-avatar team-avatar-photo">
+          <img src="team/tidiane-konate.jpg" alt="Tidiane Konaté" loading="lazy" />
+        </div>
+        <div class="team-name">Tidiane Konaté</div>
+        <div class="team-role">Developer</div>
+      </div>
+
+      <div class="team-card glass-card">
+        <div class="team-avatar team-avatar-photo">
+          <img src="team/sidi-mohamed-sall.jpg" alt="Sidi Mohamed Sall" loading="lazy" />
+        </div>
+        <div class="team-name">Sidi Mohamed Sall</div>
+        <div class="team-role">Developer</div>
+      </div>
+
+      <div class="team-card glass-card">
+        <div class="team-avatar team-avatar-photo">
+          <img src="team/ahmed-essalem.jpg" alt="Ahmed Essalem" loading="lazy" />
+        </div>
+        <div class="team-name">Ahmed Essalem</div>
+        <div class="team-role">Developer</div>
+      </div>
+
+      <div class="team-card glass-card">
+        <div class="team-avatar team-avatar-photo">
+          <img src="team/saad-ibrahim-houssein.jpg" alt="Saad Ibrahim Houssein" loading="lazy" />
+        </div>
+        <div class="team-name">Saad Ibrahim Houssein</div>
+        <div class="team-role">Developer</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════════════════════════ -->
+  <footer class="footer-v2" aria-label="Footer">
+    <div class="footer-v2-inner">
+      <div class="footer-v2-left">
+        <div class="footer-v2-brand">
+          <svg width="24" height="24" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="55" y="38" width="90" height="70" rx="20" fill="#b8d9f0"/>
+            <rect x="66" y="55" width="28" height="18" rx="5" fill="#0d1b35"/>
+            <rect x="106" y="55" width="28" height="18" rx="5" fill="#0d1b35"/>
+            <rect x="68" y="57" width="24" height="14" rx="4" fill="#00d4ff"/>
+            <rect x="108" y="57" width="24" height="14" rx="4" fill="#00d4ff"/>
+            <rect x="50" y="118" width="100" height="80" rx="22" fill="#b8d9f0"/>
+          </svg>
+          <span>ASTROBOT</span>
+        </div>
+        <p class="footer-v2-tag">Your intelligent space assistant · University graduation project</p>
+      </div>
+      <div class="footer-v2-right">
+        <a href="#home" class="footer-v2-link">Home</a>
+        <a href="#features" class="footer-v2-link">Features</a>
+        <a href="#about" class="footer-v2-link">About</a>
+      </div>
+    </div>
+    <div class="footer-v2-bottom">
+      © 2026 AstroBot · All systems operational
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       LOGIN MODAL (triggered by chat send / login buttons)
+       ═══════════════════════════════════════════════════════════════ -->
+  <div class="auth-modal" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+    <div class="auth-modal-card glass-card">
+      <button class="auth-modal-close" id="authModalClose" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+
+      <div class="auth-modal-head">
+        <svg width="44" height="50" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <radialGradient id="am-body" cx="40%" cy="30%" r="70%">
+              <stop offset="0%" stop-color="#fff"/>
+              <stop offset="100%" stop-color="#b8d9f0"/>
+            </radialGradient>
+            <radialGradient id="am-eye" cx="35%" cy="30%" r="65%">
+              <stop offset="0%" stop-color="#80deea"/>
+              <stop offset="100%" stop-color="#006064"/>
+            </radialGradient>
+          </defs>
+          <line x1="100" y1="10" x2="100" y2="40" stroke="#4dd0e1" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="100" cy="8" r="6" fill="#00d4ff">
+            <animate attributeName="opacity" values="0.8;1;0.8" dur="1.8s" repeatCount="indefinite"/>
+          </circle>
+          <rect x="55" y="38" width="90" height="70" rx="20" fill="url(#am-body)"/>
+          <rect x="66" y="55" width="28" height="18" rx="5" fill="#0d1b35"/>
+          <rect x="106" y="55" width="28" height="18" rx="5" fill="#0d1b35"/>
+          <rect x="68" y="57" width="24" height="14" rx="4" fill="url(#am-eye)"/>
+          <rect x="108" y="57" width="24" height="14" rx="4" fill="url(#am-eye)"/>
+          <rect x="50" y="118" width="100" height="80" rx="22" fill="url(#am-body)"/>
+          <path d="M 58 125 Q 30 160 38 210 L 50 205 Q 52 175 62 155 Z" fill="#1a73e8" opacity="0.85"/>
+          <path d="M 142 125 Q 170 160 162 210 L 150 205 Q 148 175 138 155 Z" fill="#1a73e8" opacity="0.85"/>
+        </svg>
+        <h2 id="authModalTitle" class="auth-modal-title">Welcome, Commander</h2>
+        <p class="auth-modal-sub" id="authModalSub">Login to start your mission with AstroBot.</p>
+      </div>
+
+      <div class="auth-modal-alert" id="authModalAlert" role="alert"></div>
+
+      <form id="authModalForm" class="auth-modal-form" novalidate>
+        <div class="input-group">
+          <label for="modalEmail">Email Address</label>
+          <div class="input-wrap">
+            <span class="input-icon" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <polyline points="2,4 12,13 22,4"/>
+              </svg>
+            </span>
+            <input type="email" id="modalEmail" class="input-field" placeholder="commander@space.io" autocomplete="email" required />
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="modalPassword">Password</label>
+          <div class="input-wrap">
+            <span class="input-icon" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input type="password" id="modalPassword" class="input-field has-toggle" placeholder="••••••••••" autocomplete="current-password" required />
+            <button type="button" class="input-toggle" id="modalPwdToggle" aria-label="Toggle password">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-orange" id="modalSubmitBtn" style="width:100%;justify-content:center;margin-top:4px;">
+          <span id="modalBtnText" style="display:flex;align-items:center;gap:8px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+              <polyline points="10 17 15 12 10 7"/>
+              <line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+            Launch Mission
+          </span>
+          <span id="modalBtnSpinner" style="display:none;"><span class="spinner"></span></span>
+        </button>
+      </form>
+
+      <div class="auth-modal-foot">
+        Don't have an account? <a href="register.html">Create one</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SCRIPTS
+       ═══════════════════════════════════════════════════════════════ -->
+  <script>
+    // ── If already logged in, go straight to chat ──────────────────
+    (function () {
+      const t = localStorage.getItem('astrobot_token');
+      const u = localStorage.getItem('astrobot_user');
+      if (t && u) window.location.href = 'chat.html';
+    })();
+
+    // ── Helpers ────────────────────────────────────────────────────
+    const $ = (id) => document.getElementById(id);
+    function showToast(msg, type) {
+      const c = $('toastContainer');
+      const el = document.createElement('div');
+      el.className = 'toast toast-' + (type || 'info');
+      el.textContent = msg;
+      c.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }
+
+    // ── SPA-style page switching (Home / Features / About) ────────
+    const PAGES = ['home', 'features', 'about'];
+    const navBurger = $('navBurger');
+
+    function closeMobileMenu() {
+      $('navLinks').classList.remove('open');
+      navBurger.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('mobile-menu-open');
+    }
+
+    function showPage(pageId) {
+      if (!PAGES.includes(pageId)) pageId = 'home';
+      PAGES.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const on = id === pageId;
+        el.hidden = !on;
+        el.classList.toggle('page-active', on);
+      });
+      document.querySelectorAll('.nav-v2-link[data-page]').forEach(l => {
+        l.classList.toggle('active', l.dataset.page === pageId);
+      });
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+      if (location.hash !== '#' + pageId) {
+        history.replaceState(null, '', '#' + pageId);
+      }
+      closeMobileMenu();
+    }
+
+    // Init from URL hash
+    const initialHash = (location.hash || '#home').replace('#', '');
+    showPage(initialHash);
+
+    // Handle back/forward
+    window.addEventListener('hashchange', () => {
+      const p = (location.hash || '#home').replace('#', '');
+      showPage(p);
+    });
+
+    // Nav link clicks
+    document.querySelectorAll('.nav-v2-link[data-page]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        showPage(link.dataset.page);
+      });
+    });
+
+    // Brand link goes to Home
+    document.querySelector('.nav-v2-brand').addEventListener('click', (e) => {
+      e.preventDefault();
+      showPage('home');
+    });
+
+    // Footer links
+    document.querySelectorAll('.footer-v2-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('#')) {
+          const p = href.replace('#', '');
+          if (PAGES.includes(p)) { e.preventDefault(); showPage(p); }
+        }
+      });
+    });
+
+    // ── Mobile burger ──────────────────────────────────────────────
+    navBurger.addEventListener('click', () => {
+      const links = $('navLinks');
+      const open = links.classList.toggle('open');
+      navBurger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      document.body.classList.toggle('mobile-menu-open', open);
+    });
+
+    // ── Login modal ────────────────────────────────────────────────
+    const authModal = $('authModal');
+    const authModalSub = $('authModalSub');
+    function openAuthModal(subtitle) {
+      if (subtitle) authModalSub.textContent = subtitle;
+      else authModalSub.textContent = 'Login to start your mission with AstroBot.';
+      authModal.classList.add('show');
+      setTimeout(() => $('modalEmail').focus(), 150);
+    }
+    function closeAuthModal() {
+      authModal.classList.remove('show');
+      $('authModalAlert').className = 'auth-modal-alert';
+      $('authModalAlert').textContent = '';
+    }
+    $('authModalClose').addEventListener('click', closeAuthModal);
+    authModal.addEventListener('click', (e) => { if (e.target === authModal) closeAuthModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAuthModal(); });
+    $('ctaLoginBtn').addEventListener('click', (e) => { e.preventDefault(); openAuthModal(); });
+    $('mobileLoginBtn').addEventListener('click', (e) => { e.preventDefault(); closeMobileMenu(); openAuthModal(); });
+
+    // Password toggle
+    $('modalPwdToggle').addEventListener('click', () => {
+      const p = $('modalPassword');
+      p.type = p.type === 'password' ? 'text' : 'password';
+    });
+
+    // ── Chat bar: store pending message, trigger login if needed ───
+    const heroForm = $('heroChatForm');
+    const heroInput = $('heroChatInput');
+
+    function handleHeroSubmit(prompt) {
+      const msg = (prompt || heroInput.value || '').trim();
+      if (!msg) { heroInput.focus(); return; }
+      // Store for post-login delivery to chat page
+      sessionStorage.setItem('astrobot_pending_message', msg);
+      openAuthModal('Login to send "' + (msg.length > 40 ? msg.slice(0, 40) + '…' : msg) + '"');
+    }
+
+    heroForm.addEventListener('submit', (e) => { e.preventDefault(); handleHeroSubmit(); });
+
+    // Suggestion chips
+    document.querySelectorAll('.hero-v2-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const p = chip.getAttribute('data-prompt') || chip.textContent.trim();
+        heroInput.value = p;
+        handleHeroSubmit(p);
+      });
+    });
+
+    // ── Submit login form ──────────────────────────────────────────
+    const modalForm = $('authModalForm');
+    const modalAlert = $('authModalAlert');
+    const modalSubmit = $('modalSubmitBtn');
+    const modalBtnText = $('modalBtnText');
+    const modalBtnSpin = $('modalBtnSpinner');
+
+    function showModalAlert(msg, type) {
+      modalAlert.className = 'auth-modal-alert show alert-' + (type || 'error');
+      modalAlert.textContent = msg;
+    }
+
+    modalForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      modalAlert.className = 'auth-modal-alert';
+      modalAlert.textContent = '';
+
+      const email = $('modalEmail').value.trim();
+      const password = $('modalPassword').value;
+      if (!email) { showModalAlert('Please enter your email.'); return; }
+      if (!password) { showModalAlert('Please enter your password.'); return; }
+
+      modalSubmit.disabled = true;
+      modalBtnText.style.display = 'none';
+      modalBtnSpin.style.display = 'inline-block';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (data.success || data.token) {
+          localStorage.setItem('astrobot_token', data.token);
+          localStorage.setItem('astrobot_user', JSON.stringify(data.user));
+          showToast('Welcome, Commander ' + data.user.name + '!', 'success');
+          setTimeout(() => { window.location.href = 'chat.html'; }, 600);
+        } else {
+          showModalAlert(data.message || data.error || 'Invalid credentials.');
+          modalSubmit.disabled = false;
+          modalBtnText.style.display = 'flex';
+          modalBtnSpin.style.display = 'none';
+        }
+      } catch (err) {
+        showModalAlert('Connection error. Please try again.');
+        modalSubmit.disabled = false;
+        modalBtnText.style.display = 'flex';
+        modalBtnSpin.style.display = 'none';
+      }
+    });
+
+    // ── Shooting stars (subtle ambient) ────────────────────────────
+    (function () {
+      const NUM = 4;
+      for (let i = 0; i < NUM; i++) {
+        const el = document.createElement('div');
+        el.className = 'shooting-star';
+        document.body.appendChild(el);
+        function launch() {
+          const startX = Math.random() * window.innerWidth;
+          const startY = Math.random() * window.innerHeight * 0.5;
+          const angle = 15 + Math.random() * 25;
+          const dist = 250 + Math.random() * 450;
+          const rad = angle * Math.PI / 180;
+          const tx = Math.cos(rad) * dist;
+          const ty = Math.sin(rad) * dist;
+          const dur = 1.4 + Math.random() * 1.8;
+          el.style.cssText = 'position:fixed;top:' + startY + 'px;left:' + startX + 'px;opacity:0;z-index:0;pointer-events:none;--angle:' + angle + 'deg;--tx:' + tx + 'px;--ty:' + ty + 'px;animation:shoot ' + dur + 's linear forwards;';
+          el.addEventListener('animationend', () => {
+            el.style.animation = 'none';
+            setTimeout(launch, 4000 + Math.random() * 8000);
+          }, { once: true });
+        }
+        setTimeout(launch, i * 3500 + Math.random() * 4000);
+      }
+    })();
+
+    // ── Nav background on scroll ───────────────────────────────────
+    const nav = document.querySelector('.nav-v2');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('nav-v2-scrolled', window.scrollY > 20);
+    }, { passive: true });
+  </script>
+</body>
+</html>

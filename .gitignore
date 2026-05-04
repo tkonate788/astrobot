@@ -1,0 +1,45 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+
+# Build artifacts
+dist/
+build/
+*.log
+
+# Environment / secrets
+.env
+.env.local
+.env.production
+.deploy.env
+docker/.env
+backend/.env
+admin/backend/.env
+*.key
+*.pem
+
+# Claude / IDE / OS
+.claude/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Project-local artifacts
+.astrobot_wf*.json
+*.tar.gz
+*.bak
+*.backup
+
+# Python (deploy script)
+__pycache__/
+*.pyc
+.python-version
+
+# Misc
+photo des dev/

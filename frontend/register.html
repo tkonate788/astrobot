@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AstroBot — Create your account" />
+  <title>AstroBot — Join the Mission</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&family=Exo+2:wght@300;400;600&display=swap" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Star field background -->
+  <div class="stars-canvas" aria-hidden="true"></div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer" aria-live="assertive" aria-atomic="true"></div>
+
+  <!-- Back to home -->
+  <a href="index.html" class="back-link" aria-label="Back to home">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+    Back
+  </a>
+
+  <!-- Auth page -->
+  <div class="auth-page">
+    <div class="auth-card glass-card" style="max-width:480px;">
+
+      <!-- Header -->
+      <div class="auth-header">
+        <div class="auth-logo">
+          <!-- Small robot SVG 40px -->
+          <svg width="40" height="46" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <radialGradient id="rb-body" cx="40%" cy="30%" r="70%">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="100%" stop-color="#b8d9f0"/>
+              </radialGradient>
+              <radialGradient id="rb-eye" cx="35%" cy="30%" r="65%">
+                <stop offset="0%" stop-color="#80deea"/>
+                <stop offset="40%" stop-color="#00d4ff"/>
+                <stop offset="100%" stop-color="#006064"/>
+              </radialGradient>
+              <linearGradient id="rb-cape" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#1a73e8"/>
+                <stop offset="100%" stop-color="#0d47a1"/>
+              </linearGradient>
+              <filter id="rb-glow" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <line x1="100" y1="10" x2="100" y2="40" stroke="#4dd0e1" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="100" cy="8" r="6" fill="#00d4ff">
+              <animate attributeName="opacity" values="0.8;1;0.8" dur="1.8s" repeatCount="indefinite"/>
+            </circle>
+            <rect x="55" y="38" width="90" height="70" rx="20" fill="url(#rb-body)"/>
+            <rect x="66" y="55" width="28" height="18" rx="5" fill="#0d1b35"/>
+            <rect x="106" y="55" width="28" height="18" rx="5" fill="#0d1b35"/>
+            <rect x="68" y="57" width="24" height="14" rx="4" fill="url(#rb-eye)" filter="url(#rb-glow)" stroke="rgba(0,212,255,0.9)" stroke-width="1.5"/>
+            <rect x="108" y="57" width="24" height="14" rx="4" fill="url(#rb-eye)" filter="url(#rb-glow)" stroke="rgba(0,212,255,0.9)" stroke-width="1.5"/>
+            <rect x="70" y="59" width="7" height="5" rx="2" fill="white" opacity="0.6"/>
+            <rect x="110" y="59" width="7" height="5" rx="2" fill="white" opacity="0.6"/>
+            <rect x="88" y="108" width="24" height="12" rx="4" fill="#dce8f0"/>
+            <rect x="50" y="118" width="100" height="80" rx="22" fill="url(#rb-body)"/>
+            <circle cx="100" cy="155" r="8" fill="none" stroke="#00d4ff" stroke-width="1.5"/>
+            <circle cx="100" cy="155" r="4" fill="url(#rb-eye)" filter="url(#rb-glow)">
+              <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <path d="M 58 125 Q 30 160 38 210 L 50 205 Q 52 175 62 155 Z" fill="url(#rb-cape)" opacity="0.85"/>
+            <path d="M 142 125 Q 170 160 162 210 L 150 205 Q 148 175 138 155 Z" fill="url(#rb-cape)" opacity="0.85"/>
+          </svg>
+          <span class="auth-logo-name">ASTROBOT</span>
+        </div>
+        <h1 class="auth-title">Join the Mission</h1>
+        <p class="auth-subtitle">Create your AstroBot account</p>
+      </div>
+
+      <!-- Alert -->
+      <div id="alertMsg" class="alert alert-error" role="alert" aria-live="polite"></div>
+
+      <!-- Register Form -->
+      <form id="registerForm" class="auth-form" novalidate>
+
+        <!-- Name + Surname row -->
+        <div class="form-row">
+          <div class="input-group">
+            <label for="name">First Name</label>
+            <div class="input-wrap">
+              <span class="input-icon" aria-hidden="true">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                class="input-field"
+                placeholder="Tidiane"
+                autocomplete="given-name"
+                required
+                aria-required="true"
+                minlength="2"
+              />
+            </div>
+          </div>
+          <div class="input-group">
+            <label for="surname">Last Name</label>
+            <div class="input-wrap">
+              <span class="input-icon" aria-hidden="true">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              <input
+                type="text"
+                id="surname"
+                name="surname"
+                class="input-field"
+                placeholder="Konaté"
+                autocomplete="family-name"
+                required
+                aria-required="true"
+                minlength="2"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="input-group">
+          <label for="email">Email Address</label>
+          <div class="input-wrap">
+            <span class="input-icon" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <polyline points="2,4 12,13 22,4"/>
+              </svg>
+            </span>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="input-field"
+              placeholder="commander@space.io"
+              autocomplete="email"
+              required
+              aria-required="true"
+            />
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="input-group">
+          <label for="password">Password</label>
+          <div class="input-wrap">
+            <span class="input-icon" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="input-field has-toggle"
+              placeholder="Min. 8 characters"
+              autocomplete="new-password"
+              required
+              aria-required="true"
+              minlength="8"
+            />
+            <button type="button" class="input-toggle" id="togglePwd1" aria-label="Toggle password visibility">
+              <svg id="eye1Open" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg id="eye1Closed" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+          <!-- Strength bar -->
+          <div class="strength-bar" id="strengthBar" aria-label="Password strength">
+            <div class="strength-seg" id="s1"></div>
+            <div class="strength-seg" id="s2"></div>
+            <div class="strength-seg" id="s3"></div>
+            <div class="strength-seg" id="s4"></div>
+            <div class="strength-seg" id="s5"></div>
+          </div>
+          <div class="strength-label" id="strengthLabel" aria-live="polite"></div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="input-group">
+          <label for="confirmPassword">Confirm Password</label>
+          <div class="input-wrap">
+            <span class="input-icon" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </span>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              class="input-field has-toggle"
+              placeholder="Repeat your password"
+              autocomplete="new-password"
+              required
+              aria-required="true"
+            />
+            <button type="button" class="input-toggle" id="togglePwd2" aria-label="Toggle confirm password visibility">
+              <svg id="eye2Open" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg id="eye2Closed" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+          <div class="match-indicator" id="matchIndicator" aria-live="polite"></div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-orange" id="submitBtn" style="width:100%;justify-content:center;margin-top:4px;">
+          <span id="btnText" style="display:flex;align-items:center;gap:8px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+              <line x1="19" y1="8" x2="19" y2="14"/>
+              <line x1="16" y1="11" x2="22" y2="11"/>
+            </svg>
+            Create Account
+          </span>
+          <span id="btnSpinner" style="display:none;"><span class="spinner"></span></span>
+        </button>
+
+      </form>
+
+      <!-- Footer -->
+      <div class="auth-footer">
+        Already have an account? <a href="login.html">Login</a>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Redirect if already logged in
+    const _t = localStorage.getItem('astrobot_token');
+    const _u = localStorage.getItem('astrobot_user');
+    if (_t && _u) { window.location.href = 'chat.html'; }
+
+    // Toast
+    function showToast(msg, type) {
+      const c = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = 'toast toast-' + type;
+      t.textContent = msg;
+      c.appendChild(t);
+      setTimeout(() => t.remove(), 5000);
+    }
+
+    // Alert
+    function showAlert(msg, type) {
+      const el = document.getElementById('alertMsg');
+      el.textContent = msg;
+      el.className = 'alert alert-' + (type || 'error') + ' show';
+    }
+    function hideAlert() {
+      const el = document.getElementById('alertMsg');
+      el.classList.remove('show');
+    }
+
+    // Password toggle helper
+    function setupToggle(btnId, inputId, openId, closedId) {
+      document.getElementById(btnId).addEventListener('click', function() {
+        const input = document.getElementById(inputId);
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        document.getElementById(openId).style.display = isPassword ? 'none' : 'block';
+        document.getElementById(closedId).style.display = isPassword ? 'block' : 'none';
+      });
+    }
+    setupToggle('togglePwd1', 'password', 'eye1Open', 'eye1Closed');
+    setupToggle('togglePwd2', 'confirmPassword', 'eye2Open', 'eye2Closed');
+
+    // Password strength
+    const strengthLabels = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
+    function calcStrength(pwd) {
+      let score = 0;
+      if (pwd.length >= 8) score++;
+      if (pwd.length >= 12) score++;
+      if (/[A-Z]/.test(pwd)) score++;
+      if (/[0-9]/.test(pwd)) score++;
+      if (/[^A-Za-z0-9]/.test(pwd)) score++;
+      return Math.min(score, 5);
+    }
+    const pwdInput = document.getElementById('password');
+    pwdInput.addEventListener('input', function() {
+      const score = calcStrength(this.value);
+      for (let i = 1; i <= 5; i++) {
+        const seg = document.getElementById('s' + i);
+        seg.className = 'strength-seg' + (i <= score ? ' s' + i : '');
+      }
+      document.getElementById('strengthLabel').textContent = this.value ? strengthLabels[score] : '';
+      checkMatch();
+    });
+
+    // Password match
+    const confirmInput = document.getElementById('confirmPassword');
+    function checkMatch() {
+      const pwd = pwdInput.value;
+      const confirm = confirmInput.value;
+      const ind = document.getElementById('matchIndicator');
+      if (!confirm) { ind.textContent = ''; ind.className = 'match-indicator'; return; }
+      if (pwd === confirm) {
+        ind.textContent = '✓ Passwords match';
+        ind.className = 'match-indicator match-ok';
+      } else {
+        ind.textContent = '✕ Passwords do not match';
+        ind.className = 'match-indicator match-bad';
+      }
+    }
+    confirmInput.addEventListener('input', checkMatch);
+
+    // Form submit
+    const form       = document.getElementById('registerForm');
+    const submitBtn  = document.getElementById('submitBtn');
+    const btnText    = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      hideAlert();
+
+      const name     = document.getElementById('name').value.trim();
+      const surname  = document.getElementById('surname').value.trim();
+      const email    = document.getElementById('email').value.trim();
+      const password = pwdInput.value;
+      const confirm  = confirmInput.value;
+
+      if (!name || name.length < 2) { showAlert('First name must be at least 2 characters.'); return; }
+      if (!surname || surname.length < 2) { showAlert('Last name must be at least 2 characters.'); return; }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showAlert('Please enter a valid email address.'); return; }
+      if (!password || password.length < 8) { showAlert('Password must be at least 8 characters.'); return; }
+      if (password !== confirm) { showAlert('Passwords do not match.'); return; }
+
+      submitBtn.disabled = true;
+      btnText.style.display = 'none';
+      btnSpinner.style.display = 'inline-block';
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, surname, email, password })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showAlert('Account created! Redirecting to login…', 'success');
+          showToast('Welcome to AstroBot, Commander!', 'success');
+          setTimeout(() => { window.location.href = 'login.html'; }, 1600);
+        } else {
+          showAlert(data.message || 'Registration failed. Please try again.');
+          submitBtn.disabled = false;
+          btnText.style.display = 'flex';
+          btnSpinner.style.display = 'none';
+        }
+      } catch (err) {
+        showAlert('Connection error. Please check your network.');
+        submitBtn.disabled = false;
+        btnText.style.display = 'flex';
+        btnSpinner.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
