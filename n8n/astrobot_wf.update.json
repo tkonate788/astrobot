@@ -1,0 +1,456 @@
+{
+  "name": "astrobot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "astrobot",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -416,
+        16
+      ],
+      "id": "26a0c702-05fc-4d55-90f8-1abd803417bc",
+      "name": "Webhook",
+      "webhookId": "4fc0cd22-a863-432d-9059-c1d4907c2950"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{$json[\"message\"]}}",
+        "options": {
+          "systemMessage": "Tu es AstroBot, l'assistant IA officiel de {{ $('Webhook').item.json.body.user_name }} {{ $('Webhook').item.json.body.user_surname }}.\n\nAppelle toujours l'utilisateur par son prénom : {{ $('Webhook').item.json.body.user_name }}.\n\n=== HISTORIQUE DE LA CONVERSATION ===\n{{ (() => {\n  const h = $('Webhook').item.json.body.conversation_history || [];\n  if (!h.length) return 'Debut de conversation.';\n  return h.map(m => 'User: ' + m.role_user + '\nAstroBot: ' + m.role_assistant).join('\n\n');\n})() }}\n=== FIN HISTORIQUE ===\n\nTu peux utiliser Think pour reflechir et SerpAPI pour des recherches web.\n\nGENERATION D'IMAGE: Si l'utilisateur demande de generer/creer/dessiner une image, reponds UNIQUEMENT avec ce JSON exact:\n{\"response\":\"Je genere l'image pour toi, {{ $('Webhook').item.json.body.user_name }} ! Un instant...\",\"action\":\"generate_image\",\"image_prompt\":\"detailed english description\"}\n\nSINON reponds UNIQUEMENT avec ce JSON valide (sans markdown, sans texte autour):\n{\"response\":\"ta reponse ici\"}\n\nRegles absolues:\n- JSON valide uniquement, jamais de markdown\n- Toujours utiliser le prenom dans la reponse\n- Tenir compte de l'historique pour repondre de facon coherente\n- Reponds TOUJOURS dans la meme langue que le message de l'utilisateur (anglais si l'utilisateur ecrit en anglais, espagnol si en espagnol, etc.)\n\nIMPORTANT - LIMITE D'OUTILS:\n- Tu peux appeler SerpAPI pour chercher sur le web, mais JAMAIS plus de 2 RECHERCHES MAX par question.\n- Tu peux utiliser Think 1 a 2 fois, pas plus.\n- Apres 2 recherches et 2 reflexions, formule immediatement ta reponse JSON finale avec ce que tu as trouve, meme si c'est partiel.\n- Ne boucle jamais entre Think et SerpAPI.\n\nPIECE JOINTE (attachment): Si le champ \"attachment\" est present dans l'input ({name, mime, size, data en base64}), cela signifie que l'utilisateur a joint un fichier. Pour les images (mime commencant par image/): essaye de decrire et analyser l'image. Pour les documents: accuse reception et demande ce que l'utilisateur souhaite en faire s'il n'a pas precise. Tu peux mentionner le nom du fichier dans ta reponse.\n\n\nGENERATION DE PDF (IMPORTANT):\nQuand l'utilisateur demande explicitement un PDF, un rapport, un document, une fiche, ou dit des choses comme: \"fais un pdf\", \"genere un pdf\", \"mets ca en pdf\", \"mets tout ca dans un fichier\", \"cree un document\", \"fais un rapport\", \"exporte ca\", tu reponds UNIQUEMENT avec ce JSON (aucun texte avant, aucun texte apres):\n{\n  \"response\": \"Voici ton PDF, [prenom] ! Tu peux le telecharger ci-dessous.\",\n  \"action\": \"generate_pdf\",\n  \"pdf_title\": \"Titre pertinent base sur le sujet\",\n  \"pdf_content\": \"LE CONTENU COMPLET EN MARKDOWN\"\n}\n\nREGLES ABSOLUES POUR pdf_content:\n1. pdf_content est OBLIGATOIRE — jamais vide, jamais absent. Minimum 300 caracteres.\n2. Si l'utilisateur dit \"mets tout ca\", \"resume ca\", \"exporte ca\", \"fais en un pdf\" en reference a ta reponse precedente, tu dois REPRENDRE INTEGRALEMENT le contenu de ta derniere reponse dans pdf_content (pas un resume, TOUT le texte detaille).\n3. Si c'est une nouvelle demande (ex: \"fais un rapport sur Mars\"), tu redige un document structure complet directement dans pdf_content.\n4. Format de pdf_content: markdown avec titres (# ## ###), gras (**texte**), listes avec \"- \", et plusieurs paragraphes. Utilise \n pour les sauts de ligne.\n5. Exemple de pdf_content valide: \"# Configuration VirtualBox\n\n## Mode Bridged Adapter\n\nLe mode **Bridged** permet a la VM...\n\n- Point 1\n- Point 2\n\n## Interface reseau\n\n...\"\n6. Echappe correctement les guillemets et les sauts de ligne dans pdf_content.\n",
+          "maxIterations": 20
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        752,
+        32
+      ],
+      "id": "459dee38-12e1-4ab2-b05c-2da8aa0199ef",
+      "name": "AI Agent",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "model": "mistral-medium-latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        752,
+        480
+      ],
+      "id": "0858a343-e1fd-429d-b16a-ee78f1aa0606",
+      "name": "Mistral Cloud Chat Model",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "qBfFpg0xdFWRHNPG",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1488,
+        -16
+      ],
+      "id": "0900984f-906a-45a0-bc61-4523460cdf36",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "extract-resp",
+              "name": "response",
+              "value": "={{ (() => { try { const o = JSON.parse($json.output.replace(/```json/g,'').replace(/```/g,'').trim()); return o.response || $json.output; } catch(e) { return $json.output || ''; } })() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1232,
+        -16
+      ],
+      "id": "24398b58-3360-4297-a9d4-f6168f26c24b",
+      "name": "Edit Fields",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://whisper-api:8000/transcribe",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        320,
+        -112
+      ],
+      "id": "dd338ef7-5c60-4c81-9fbb-c0f48e6bf6b9",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b86f72f3-cc78-4ad5-9b25-922ab92b8c04",
+              "name": "message",
+              "value": "={{$json.text}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        512,
+        -112
+      ],
+      "id": "79e79533-897b-4266-bb74-bf60286f2409",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "=body.audio",
+        "options": {
+          "fileName": "audio.webm",
+          "mimeType": "audio/webm"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        128,
+        -112
+      ],
+      "id": "5f9c0ccf-b1a8-4632-8653-9e2a01d391d1",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json[\"body\"][\"audio\"]}}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "id": "a01a1c6d-0344-4361-b225-e34cf163dd19"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b034e75f-cf45-46cc-aa94-492de9e54a3c",
+                    "leftValue": "={{$json[\"body\"][\"message\"]}}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "message"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -192,
+        16
+      ],
+      "id": "c5f645f3-0956-4bfc-b0ab-1476e6fe40fa",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3b282347-ef9a-44b9-a441-04b49271a359",
+              "name": "message",
+              "value": "={{$json.body.message}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        304,
+        144
+      ],
+      "id": "fa4bc021-0628-4210-b41c-64e143886453",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        256
+      ],
+      "id": "2a1c9fcc-1f77-4d6d-becd-98d4e379ad86",
+      "name": "SerpAPI",
+      "credentials": {
+        "serpApi": {
+          "id": "e6mIFzcEICxGdl09",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        912,
+        240
+      ],
+      "id": "92ba6db1-90ac-4929-9124-80793bc8a41b",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Payload node — builds enriched prompt for AI Agent\nconst wb = $('Webhook').first().json.body;\nconst userName = ((wb.user_name || '') + ' ' + (wb.user_surname || '')).trim();\nconst currentMsg = $input.first().json.message || wb.message || '';\nconst history = wb.conversation_history || [];\n\nlet historyStr = '';\nif (history.length > 0) {\n  historyStr = '\\n=== HISTORIQUE DE CONVERSATION ===\\n' +\n    history.map(m => 'User: ' + m.role_user + '\\nAstroBot: ' + m.role_assistant).join('\\n\\n') +\n    '\\n=== FIN HISTORIQUE ===\\n\\n';\n}\n\nconst message = 'Utilisateur: ' + userName + '\\n' + historyStr + 'Message actuel: ' + currentMsg;\nreturn [{ json: { message } }];"
+      },
+      "id": "c0fa88c2-bb22-48b4-bf3b-cbdcf9cc173b",
+      "name": "Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        144
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payload": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null
+}

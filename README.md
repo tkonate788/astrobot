@@ -145,7 +145,7 @@ from `docker/.env`. Sign in once and start exploring.
 
 ```bash
 # Run the comprehensive test suite (66 tests)
-python test_all.py
+python scripts/test_all.py
 ```
 
 ---
@@ -176,10 +176,23 @@ astrobot/
 │   └── Dockerfile
 ├── docker/
 │   ├── docker-compose.yml
-│   ├── Dockerfile         # Main app
-│   └── .env.example       # Template for local secrets
-├── deploy.py              # SSH + SCP + docker compose deployment
-├── test_all.py            # Full integration test suite (66 tests)
+│   └── Dockerfile         # Main app
+├── scripts/
+│   ├── deploy.py          # SSH + SFTP + docker compose deployment
+│   ├── test_all.py        # Full integration test suite (66 tests)
+│   └── legacy/            # Superseded scripts kept for reference
+├── n8n/                   # Exported n8n workflow (Mistral agent + tools)
+│   └── astrobot_wf.json
+├── assets/                # Shared visual assets
+│   ├── branding/          # Logos + QR code
+│   ├── screenshots/       # Product screenshots (used by report/poster/slides)
+│   ├── team/              # Developer photos
+│   └── advisor/           # Advisor photo
+├── deliverables/          # Graduation deliverables (report, poster, slides…)
+│   ├── report/            # EN + FR report (.docx/.pdf) + generator scripts
+│   ├── poster/            # 70×100 cm poster + generator
+│   ├── presentation/      # 32-slide deck, speaker notes, flyer, promo videos
+│   └── references/        # OSTIM templates & sample reports
 └── README.md
 ```
 
@@ -189,8 +202,8 @@ astrobot/
 
 ```bash
 # Set ASTROBOT_HOST / ASTROBOT_ADMIN_EMAIL / ASTROBOT_ADMIN_PASSWORD
-# (or place them in .deploy.env), then:
-python test_all.py
+# (or place them in .deploy.env at the project root), then:
+python scripts/test_all.py
 ```
 
 The suite covers:

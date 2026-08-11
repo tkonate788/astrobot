@@ -30,16 +30,18 @@ Thumbs.db
 *.swp
 *.swo
 
-# Project-local artifacts
-.astrobot_wf*.json
+# Quarantine (old versions pending deletion decision — kept local only)
+archive/
+
+# Personal data (kept local only)
+deliverables/cv/
+
+# Backups
 *.tar.gz
 *.bak
 *.backup
 
-# Python (deploy script)
+# Python (build/deploy scripts)
 __pycache__/
 *.pyc
 .python-version
-
-# Misc
-photo des dev/
