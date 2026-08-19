@@ -38,6 +38,41 @@ app.use(
   })
 );
 
+// ─── Admin reverse proxy ────────────────────────────────────────────────────
+// The admin dashboard runs in its own container but must be reachable on the
+// SAME origin/port as the main app, under /admin. We stream /admin/* to the
+// admin service (astrobot-admin:7040) with the /admin prefix stripped, so the
+// admin backend still sees /api/* and /*. Registered before the body parsers
+// so request bodies pass through untouched.
+const http = require('http');
+const ADMIN_TARGET = process.env.ADMIN_INTERNAL_URL || 'http://astrobot-admin:7040';
+const adminUrl = new URL(ADMIN_TARGET);
+app.use('/admin', (req, res) => {
+  // Ensure /admin resolves relative asset links correctly.
+  if (req.originalUrl === '/admin') return res.redirect(301, '/admin/');
+  const targetPath = req.originalUrl.replace(/^\/admin/, '') || '/';
+  const proxyReq = http.request(
+    {
+      host: adminUrl.hostname,
+      port: adminUrl.port || 80,
+      method: req.method,
+      path: targetPath,
+      headers: { ...req.headers, host: adminUrl.host },
+    },
+    (proxyRes) => {
+      res.writeHead(proxyRes.statusCode, proxyRes.headers);
+      proxyRes.pipe(res);
+    }
+  );
+  proxyReq.on('error', (err) => {
+    console.error('[ADMIN-PROXY] error:', err.message);
+    if (!res.headersSent) {
+      res.status(502).json({ success: false, error: 'Admin service unavailable.' });
+    }
+  });
+  req.pipe(proxyReq);
+});
+
 // ─── Rate Limiting ─────────────────────────────────────────────────────────
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

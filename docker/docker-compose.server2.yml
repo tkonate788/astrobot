@@ -1,8 +1,11 @@
 # ── AstroBot — Server 2 (77.37.120.217) Docker Compose ──────────────
-# Topology: NO public host ports. Both services are reached only through
-# the host's existing Caddy reverse proxy over the `astrobot_net` network:
-#     https://astrobot.77-37-120-217.sslip.io/       -> astrobot:3000
-#     https://astrobot.77-37-120-217.sslip.io/admin  -> astrobot-admin:7040
+# Single origin/port for everything:
+#   - Main app published on host port 3000  -> http://<host>:3000/
+#   - Admin dashboard on the SAME port under -> http://<host>:3000/admin
+#     (the main app reverse-proxies /admin/* to astrobot-admin:7040)
+#   - Also served over HTTPS by the host's Caddy:
+#       https://astrobot.77-37-120-217.sslip.io/       -> astrobot:3000
+#       https://astrobot.77-37-120-217.sslip.io/admin  -> (same, via the app)
 #
 # Postgres is the existing `postgre_container` on this host (pgvector 15.4).
 # We create a dedicated `astrobot` database/user on it — no other DB is touched.
@@ -20,13 +23,15 @@ services:
     container_name: astrobot
     image: astrobot:2.0.0
 
-    # No `ports:` — not exposed to the host. Caddy proxies it internally.
-    expose:
-      - "3000"
+    # Published on the host so http://<host>:3000 works directly.
+    # Caddy also reverse-proxies to it for HTTPS.
+    ports:
+      - "3000:3000"
 
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - ADMIN_INTERNAL_URL=http://astrobot-admin:7040
       - JWT_SECRET=${JWT_SECRET}
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
