@@ -26,6 +26,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'change_me_in_env';
 const PORT = process.env.PORT || 7040;
 const app = express();
 
+// Behind the Caddy reverse proxy (mounted under /admin): trust the first
+// proxy hop so rate-limiting and req.ip use the real client IP.
+app.set('trust proxy', 1);
+
 // ── Middleware ────────────────────────────────────────────────────────
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 app.use(cors({ origin: true, credentials: true, methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'] }));

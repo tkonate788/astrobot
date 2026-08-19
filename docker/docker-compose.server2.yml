@@ -1,0 +1,117 @@
+# ── AstroBot — Server 2 (77.37.120.217) Docker Compose ──────────────
+# Topology: NO public host ports. Both services are reached only through
+# the host's existing Caddy reverse proxy over the `astrobot_net` network:
+#     https://astrobot.77-37-120-217.sslip.io/       -> astrobot:3000
+#     https://astrobot.77-37-120-217.sslip.io/admin  -> astrobot-admin:7040
+#
+# Postgres is the existing `postgre_container` on this host (pgvector 15.4).
+# We create a dedicated `astrobot` database/user on it — no other DB is touched.
+# After `up`, connect the shared containers to this network (idempotent):
+#     docker network connect astrobot_net postgre_container
+#     docker network connect astrobot_net caddy
+#
+# Secrets come from `.env` next to this file (never committed).
+
+services:
+  astrobot:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: astrobot
+    image: astrobot:2.0.0
+
+    # No `ports:` — not exposed to the host. Caddy proxies it internally.
+    expose:
+      - "3000"
+
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - N8N_WEBHOOK=${N8N_WEBHOOK}
+      - HF_API_KEY=${HF_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+
+    networks:
+      - astrobot_net
+
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 128M
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  astrobot-admin:
+    build:
+      context: ..
+      dockerfile: admin/Dockerfile
+    container_name: astrobot-admin
+    image: astrobot-admin:1.0.0
+
+    expose:
+      - "7040"
+
+    environment:
+      - NODE_ENV=production
+      - PORT=7040
+      - JWT_SECRET=${JWT_SECRET}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+
+    networks:
+      - astrobot_net
+
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.3'
+        reservations:
+          memory: 64M
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:7040/api/health', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+networks:
+  astrobot_net:
+    name: astrobot_net
+    driver: bridge

@@ -2,7 +2,10 @@
    ASTROBOT ADMIN DASHBOARD — single-file SPA
    ════════════════════════════════════════════════════════════════════ */
 
-const API = '/api';
+// Served under /admin/ by the reverse proxy; the proxy strips the /admin
+// prefix so the backend still sees /api/*. Keep the prefix here so browser
+// fetches from /admin/ hit the admin service, not the main app.
+const API = '/admin/api';
 const TOKEN_KEY = 'astrobot_admin_token';
 const USER_KEY = 'astrobot_admin_user';
 const $ = (id) => document.getElementById(id);

@@ -45,3 +45,6 @@ deliverables/cv/
 __pycache__/
 *.pyc
 .python-version
+
+# Local DB backups (user data — never publish)
+backups/

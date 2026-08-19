@@ -15,6 +15,11 @@ const featuresRoutes = featuresModule.router;
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Behind the Caddy reverse proxy: trust the first proxy hop so that
+// req.ip / rate-limiting use the real client IP (X-Forwarded-For) instead
+// of the proxy's address.
+app.set('trust proxy', 1);
+
 // ─── Security Middleware ────────────────────────────────────────────────────
 app.use(
   helmet({
