@@ -19,6 +19,9 @@ RUN npm install --omit=dev --silent && npm cache clean --force
 # Copy app source
 COPY admin/backend/ .
 
+# Shared modules (LLM provider catalog / client / crypto)
+COPY shared/ ./shared/
+
 # Permissions
 RUN chown -R adminbot:adminbot /app
 USER adminbot

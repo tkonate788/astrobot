@@ -1,5 +1,16 @@
 const { Pool } = require('pg');
 require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+
+// shared/ lives at /app/shared in Docker and ../../shared in local dev
+function findShared() {
+  for (const c of [path.join(__dirname, '..', 'shared'), path.join(__dirname, '..', '..', 'shared')]) {
+    if (fs.existsSync(path.join(c, 'llm', 'index.js'))) return c;
+  }
+  throw new Error('shared/ directory not found');
+}
+const { ensureAiSchema } = require(path.join(findShared(), 'llm', 'schema'));
 
 const pool = new Pool({
   host: process.env.DB_HOST || 'postgre_container',
@@ -118,6 +129,9 @@ const initDB = async () => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // ── AI provider tables (shared/llm/schema.js) ─────────────────────
+    await ensureAiSchema(client);
 
     // ── Seed admin account ────────────────────────────────────────────
     // Idempotent: ensures the canonical admin always exists with the

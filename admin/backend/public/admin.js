@@ -146,13 +146,14 @@ function navigate(page) {
   if (page === 'dashboard') loadStats();
   else if (page === 'users') loadUsers();
   else if (page === 'settings') loadSettings();
+  else if (page === 'ai' && window.loadAiPage) window.loadAiPage();
 }
 document.querySelectorAll('.nav-item[data-page]').forEach((a) => {
   a.addEventListener('click', (e) => { e.preventDefault(); navigate(a.dataset.page); });
 });
 window.addEventListener('hashchange', () => {
   const h = (location.hash || '#dashboard').replace('#', '');
-  if (['dashboard', 'users', 'settings'].includes(h)) navigate(h);
+  if (['dashboard', 'users', 'settings', 'ai'].includes(h)) navigate(h);
 });
 
 // ────────────────────────────────────────────────────────────────────

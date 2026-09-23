@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" />
   <link rel="stylesheet" href="admin.css?v=1.0" />
+  <link rel="stylesheet" href="admin-ai.css?v=1.0" />
 </head>
 <body>
 
@@ -93,6 +94,10 @@
         <a href="#settings" class="nav-item" data-page="settings">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           Settings
+        </a>
+        <a href="#ai" class="nav-item" data-page="ai">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+          AI Provider
         </a>
         <a href="/" target="_blank" class="nav-item nav-external">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -293,6 +298,61 @@
         </div>
       </section>
 
+      <!-- ═══ AI PROVIDER PAGE ═══ -->
+      <section class="page" id="page-ai" hidden>
+        <header class="page-head">
+          <div>
+            <h1 class="page-title">AI Provider</h1>
+            <p class="page-sub">The engine that chats with your users and answers them. Switch it any time — the change is immediate.</p>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="aiRefreshBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh
+          </button>
+        </header>
+
+        <div class="card ai-current" id="aiCurrent"></div>
+
+        <h3 class="ai-section-title">My configured engines</h3>
+        <div class="ai-engines" id="aiEngines"></div>
+
+        <h3 class="ai-section-title">Add an engine</h3>
+        <p class="ai-section-sub">Pick a provider, paste your API key, and its model list loads by itself. Want another model from the same provider later? Just edit it — no need to paste the key again.</p>
+        <div class="ai-catalog" id="aiCatalog"></div>
+
+        <h3 class="ai-section-title">Fallback</h3>
+        <p class="ai-section-sub">The original n8n workflow. Use it only if none of the providers above works — it also takes over automatically when the active provider fails.</p>
+        <div class="ai-engines" id="aiFallback"></div>
+
+        <div class="card ai-collapsible" id="aiPromptCard">
+          <button class="ai-collapsible-head" id="aiPromptToggle">
+            <div>
+              <h3>Instructions given to the AI</h3>
+              <p>The text that defines how it behaves and answers. For advanced users. Placeholders: {{user_name}}, {{user_surname}}.</p>
+            </div>
+            <span id="aiPromptChevron" style="font-size:1.3rem;transition:transform .2s">&#8964;</span>
+          </button>
+          <div class="ai-collapsible-body" id="aiPromptBody" hidden>
+            <textarea id="aiPromptText" spellcheck="false"></textarea>
+            <div class="ai-prompt-foot">
+              <span class="ai-muted" id="aiPromptState"></span>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-ghost btn-sm" id="aiPromptReset">Reset to default</button>
+                <button class="btn btn-primary btn-sm" id="aiPromptSave">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="ai-section-title">Latest conversations handled by the AI</h3>
+        <div class="card table-wrap">
+          <table class="table">
+            <thead><tr><th>User</th><th>Message</th><th>Engine</th><th>When</th></tr></thead>
+            <tbody id="aiRecentBody"></tbody>
+          </table>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -382,9 +442,64 @@
     </div>
   </div>
 
+  <!-- AI engine modal (add / edit) -->
+  <div class="modal" id="aiModal">
+    <div class="modal-card ai-modal-card">
+      <div class="modal-head">
+        <div class="ai-modal-head">
+          <div id="aiModalLogo"></div>
+          <div><h3 id="aiModalTitle">Provider</h3><p id="aiModalSub">Setup in 3 steps</p></div>
+        </div>
+        <button class="modal-close" id="aiModalClose">&times;</button>
+      </div>
+      <div class="ai-modal-body">
+        <div class="ai-note" id="aiModalNote" hidden></div>
+
+        <div id="aiKeyBlock">
+          <div class="ai-step"><span class="ai-step-n">1</span> Paste your API key</div>
+          <div class="ai-field">
+            <div class="ai-inline">
+              <input type="password" id="aiKeyInput" autocomplete="off" spellcheck="false" />
+              <button class="btn btn-ghost btn-sm" id="aiCheckBtn">Check</button>
+            </div>
+            <div class="ai-hint"><a id="aiKeyDocs" href="#" target="_blank" rel="noopener">Where do I find my key? &#8599;</a>&nbsp; It is encrypted before being stored and never shown again.</div>
+          </div>
+        </div>
+
+        <div id="aiUrlBlock" hidden>
+          <div class="ai-field"><label id="aiUrlLabel">Base URL</label><input type="url" id="aiUrlInput" spellcheck="false" /></div>
+        </div>
+
+        <div id="aiKeyStatus" class="ai-status muted"></div>
+
+        <div id="aiModelsBlock">
+          <div class="ai-step"><span class="ai-step-n">2</span> Choose the model from the list</div>
+          <div class="ai-field"><input type="text" id="aiModelSearch" placeholder="Search a model…" autocomplete="off" /></div>
+          <div class="ai-model-list" id="aiModelList"></div>
+          <div id="aiManualModel" class="ai-field" style="margin-top:8px" hidden>
+            <label>Or type the model id manually</label>
+            <input type="text" id="aiManualModelInput" spellcheck="false" />
+          </div>
+          <div class="ai-selected">Selected: <b id="aiSelectedModel">—</b></div>
+        </div>
+
+        <div id="aiLabelBlock">
+          <div class="ai-step"><span class="ai-step-n">3</span> Name it (optional)</div>
+          <div class="ai-field"><input type="text" id="aiLabelInput" maxlength="120" /></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-sm" id="aiModalCancel">Cancel</button>
+        <button class="btn btn-ghost btn-sm" id="aiModalSave">Save</button>
+        <button class="btn btn-primary btn-sm" id="aiModalSaveUse">&#10003; Save &amp; use it</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ─── Scripts ─── -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
   <script src="admin.js?v=1.0"></script>
+  <script src="admin-ai.js?v=1.0"></script>
 </body>
 </html>

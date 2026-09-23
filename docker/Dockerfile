@@ -31,6 +31,9 @@ COPY backend/ .
 # Copy frontend into public/ (served as static files)
 COPY frontend/ ./public/
 
+# Shared modules (LLM provider catalog / client / crypto)
+COPY shared/ ./shared/
+
 # Set permissions
 RUN chown -R astrobot:astrobot /app
 

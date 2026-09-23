@@ -8,6 +8,16 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
+const fs = require('fs');
+
+// shared/ lives at /app/shared in Docker and ../../shared in local dev
+function findShared() {
+  for (const c of [path.join(__dirname, 'shared'), path.join(__dirname, '..', '..', 'shared')]) {
+    if (fs.existsSync(path.join(c, 'llm', 'index.js'))) return c;
+  }
+  throw new Error('shared/ directory not found');
+}
+const shared = require(path.join(findShared(), 'llm'));
 
 // ── DB pool (shared with main app DB, read-mostly here) ──────────────
 const pool = new Pool({
@@ -394,6 +404,9 @@ app.get('/api/users/:id/conversations', requireAdmin, async (req, res) => {
   }
 });
 
+// ── AI PROVIDER (engine selection, keys, models, tests) ───────────────
+app.use('/api/ai', requireAdmin, require('./routes/ai')({ pool, shared }));
+
 // ── SPA fallback ──────────────────────────────────────────────────────
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) {
@@ -403,6 +416,11 @@ app.get('*', (req, res) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────────────
+// Make sure the AI tables exist even if the admin boots before the main app.
+pool.connect().then(async (c) => {
+  try { await shared.schema.ensureAiSchema(c); } catch (e) { console.error('[ADMIN] AI schema:', e.message); } finally { c.release(); }
+}).catch((e) => console.error('[ADMIN] DB not reachable yet:', e.message));
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log('\n[ADMIN] Dashboard listening on port ' + PORT);
   console.log('[ADMIN] DB:', process.env.DB_HOST + '/' + process.env.DB_NAME);

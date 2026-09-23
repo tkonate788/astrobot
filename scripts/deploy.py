@@ -55,6 +55,7 @@ INCLUDE = [
     "frontend",
     "backend",
     "admin",
+    "shared",
     "docker",
     "README.md",
 ]

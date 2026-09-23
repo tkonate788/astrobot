@@ -4,6 +4,7 @@ const { createWorker } = require('tesseract.js');
 const { pool } = require('../db/index');
 const { authenticateToken } = require('../middleware/auth');
 const { getNotebookContext } = require('./features');
+const llmRouter = require('../services/llmRouter');
 
 const router = express.Router();
 
@@ -227,8 +228,6 @@ router.post('/message', async (req, res) => {
       }
     }
 
-    const n8nWebhookUrl = process.env.N8N_WEBHOOK || 'http://76.13.62.195:5678/webhook/astrobot';
-
     // Fetch last 15 messages for conversation context (ordered oldest→newest)
     const historyResult = await pool.query(
       `SELECT message, response FROM conversations
@@ -299,65 +298,48 @@ router.post('/message', async (req, res) => {
       console.error('[CHAT] notebook ctx error:', e.message);
     }
 
+    // ── Ask the active engine (admin-selected provider, or the n8n workflow) ──
+    let engineUsed = 'n8n';
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 45000);
-
-      const webhookRes = await fetch(n8nWebhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: userId,
-          user_name: req.user.name,
-          user_surname: req.user.surname,
-          user_email: req.user.email,
-          message: effectiveMessage,
-          session_id: session_id || `user_${userId}`,
-          audio: audio || null,
-          // First attachment (backward-compat with existing n8n workflow)
-          attachment: hasAttachment
-            ? {
-                name: String(attList[0].name || 'file').slice(0, 200),
-                mime: String(attList[0].mime || 'application/octet-stream').slice(0, 100),
-                size: Number(attList[0].size || 0),
-                data: attList[0].data,
-              }
-            : null,
-          // Full array for workflows that support multiple
-          attachments: hasAttachment ? attList.map((a) => ({
-            name: String(a.name || 'file').slice(0, 200),
-            mime: String(a.mime || 'application/octet-stream').slice(0, 100),
-            size: Number(a.size || 0),
-            data: a.data,
-          })) : [],
-          persona: persona || 'default',
-          conversation_history: conversationHistory,
-        }),
-        signal: controller.signal,
+      const n8nPayload = {
+        user_id: userId,
+        user_name: req.user.name,
+        user_surname: req.user.surname,
+        user_email: req.user.email,
+        message: effectiveMessage,
+        session_id: session_id || `user_${userId}`,
+        audio: audio || null,
+        // First attachment (backward-compat with existing n8n workflow)
+        attachment: hasAttachment
+          ? {
+              name: String(attList[0].name || 'file').slice(0, 200),
+              mime: String(attList[0].mime || 'application/octet-stream').slice(0, 100),
+              size: Number(attList[0].size || 0),
+              data: attList[0].data,
+            }
+          : null,
+        // Full array for workflows that support multiple
+        attachments: hasAttachment ? attList.map((a) => ({
+          name: String(a.name || 'file').slice(0, 200),
+          mime: String(a.mime || 'application/octet-stream').slice(0, 100),
+          size: Number(a.size || 0),
+          data: a.data,
+        })) : [],
+        persona: persona || 'default',
+        conversation_history: conversationHistory,
+      };
+      const result = await llmRouter.generateReply({
+        user: req.user,
+        effectiveMessage,
+        conversationHistory,
+        n8nPayload,
       });
-      clearTimeout(timeoutId);
-
-      if (webhookRes.ok) {
-        const webhookData = await webhookRes.json();
-        // Support various n8n response formats
-        botResponse =
-          webhookData.response ||
-          webhookData.message ||
-          webhookData.output ||
-          webhookData.text ||
-          webhookData.answer ||
-          (Array.isArray(webhookData) && webhookData[0]?.response) ||
-          (Array.isArray(webhookData) && webhookData[0]?.output) ||
-          JSON.stringify(webhookData);
-
-        // Handle image generation response
-        imageUrl = webhookData.image_url || webhookData.image || null;
-      } else {
-        console.error('[CHAT] n8n webhook status:', webhookRes.status);
-        botResponse = "I'm having trouble connecting right now. Please try again, Commander.";
-      }
-    } catch (webhookErr) {
-      console.error('[CHAT] n8n webhook error:', webhookErr.message);
+      botResponse = result.text;
+      imageUrl = result.imageUrl || null;
+      engineUsed = result.engine;
+      if (result.fallback) console.warn('[CHAT] provider failed, answered by n8n fallback');
+    } catch (engineErr) {
+      console.error('[CHAT] engine error:', engineErr.message);
       botResponse = "I'm currently offline from my main systems. Please check back shortly, Commander.";
     }
 
@@ -597,8 +579,8 @@ router.post('/message', async (req, res) => {
     // Save conversation to DB
     const result = await pool.query(
       `INSERT INTO conversations
-         (user_id, message, response, session_id, image_url, pdf_url, pdf_filename, attachment)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         (user_id, message, response, session_id, image_url, pdf_url, pdf_filename, attachment, engine)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING id, message, response, session_id, image_url, pdf_url, pdf_filename, attachment, created_at`,
       [
         userId,
@@ -612,6 +594,7 @@ router.post('/message', async (req, res) => {
         pdfDataUrl,
         pdfFilename,
         attachmentJson,
+        engineUsed,
       ]
     );
 
