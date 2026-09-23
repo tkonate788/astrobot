@@ -40,7 +40,7 @@ Three Docker services on the same private network:
 | Service          | Port | Image                  | Purpose                                         |
 |------------------|------|------------------------|-------------------------------------------------|
 | `astrobot`       | 3000 | `astrobot:2.0.0`       | Main user-facing chat app                       |
-| `astrobot-admin` | 7040 | `astrobot-admin:1.0.0` | Admin dashboard (stats, user mgmt, settings)    |
+| `astrobot-admin` | 7040 (internal only) | `astrobot-admin:1.0.0` | Admin dashboard — served by the main app under `/admin` |
 | n8n              | 5678 | `n8n` (external)       | LLM workflow orchestration                      |
 
 ---
@@ -134,9 +134,12 @@ cd docker
 docker compose up -d --build
 ```
 
-Both services come up:
+Both services come up on a single port:
 - Main app: http://localhost:3000
-- Admin dashboard: http://localhost:7040
+- Admin dashboard: http://localhost:3000/admin (the main app reverse-proxies `/admin/*` to the admin container)
+
+For the production server behind Caddy (HTTPS via sslip.io until a real domain is bought), use
+`docker compose -f docker-compose.server2.yml up -d --build` — see the comments at the top of that file.
 
 The admin account is auto-seeded on first run using `ADMIN_EMAIL` / `ADMIN_PASSWORD`
 from `docker/.env`. Sign in once and start exploring.
