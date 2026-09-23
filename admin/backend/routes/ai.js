@@ -55,8 +55,9 @@ module.exports = function createAiRouter({ pool, shared }) {
   async function testN8n(webhookUrl) {
     const t0 = Date.now();
     try {
+      // The n8n agent (Mistral + tools) can legitimately take 30–60 s.
       const ctrl = new AbortController();
-      const to = setTimeout(() => ctrl.abort(), 30000);
+      const to = setTimeout(() => ctrl.abort(), 75000);
       const res = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
