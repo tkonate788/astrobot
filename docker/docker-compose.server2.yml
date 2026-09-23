@@ -89,6 +89,8 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
+      # Needed so the admin can seed / test the n8n fallback engine
+      - N8N_WEBHOOK=${N8N_WEBHOOK}
 
     networks:
       - astrobot_net

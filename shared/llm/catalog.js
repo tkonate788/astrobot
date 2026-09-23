@@ -57,6 +57,8 @@ const PROVIDERS = [
     id: 'openrouter', label: 'OpenRouter (multi-provider gateway)', api: 'openai', badge: 'OR', color: '#6366f1',
     baseUrl: 'https://openrouter.ai/api/v1', keyRequired: true,
     docsUrl: 'https://openrouter.ai/keys',
+    // /models is public: verify the key separately (free call, 401 on bad key)
+    authCheckUrl: 'https://openrouter.ai/api/v1/auth/key',
   },
   {
     id: 'together', label: 'Together AI', api: 'openai', badge: 'TA', color: '#0ea5e9',
@@ -81,6 +83,8 @@ const PROVIDERS = [
     baseUrl: 'https://router.huggingface.co/v1', keyRequired: true,
     docsUrl: 'https://huggingface.co/settings/tokens',
     note: 'Same token as HF_API_KEY (image generation). Models are served by partner providers.',
+    // /v1/models is public: verify the token separately (free call, 401 on bad token)
+    authCheckUrl: 'https://huggingface.co/api/whoami-v2',
     filter: (id) => !NON_CHAT.test(id),
   },
   {

@@ -60,6 +60,12 @@ async function listModels(providerId, { apiKey, baseUrl } = {}) {
   const base = resolveBase(p, baseUrl);
   let items = [];
 
+  // Some providers list models without authentication; make sure a wrong
+  // key is rejected here rather than at the first real chat message.
+  if (p.authCheckUrl && apiKey) {
+    await http(p.authCheckUrl, { headers: authHeaders(p, apiKey), timeout: 15000 });
+  }
+
   if (p.api === 'anthropic') {
     const d = await http(base + '/v1/models?limit=1000', { headers: authHeaders(p, apiKey) });
     items = (d.data || []).map((m) => ({ id: m.id, label: m.display_name || m.id }));

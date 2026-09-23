@@ -82,7 +82,14 @@ Three Docker services on the same private network:
 - ⏹ **Stop generation** mid-stream
 - 🛡 **Profile photo** with built-in cropper (rotate / zoom / flip)
 
-### Admin dashboard (port 7040)
+### Admin dashboard (`/admin`)
+- 🧠 **AI Provider page** — plug any LLM provider instead of (or next to) the n8n workflow:
+  OpenAI, Anthropic, Mistral, Google Gemini, Groq, DeepSeek, xAI, OpenRouter, Together AI,
+  Cohere, Perplexity, Hugging Face, Ollama (local) or any OpenAI-compatible API.
+  Paste a key → it is verified and the provider's model list loads → pick a model → "Save & use".
+  Keys are AES-256-GCM encrypted at rest and never shown again; switch models later without
+  re-entering the key. The n8n workflow stays as a one-click fallback and takes over
+  automatically if the active provider fails. The system prompt is editable from the page.
 - 🔐 Admin-only login (regular users get 403)
 - 📊 Real-time stats: users / messages / sessions / tokens / images / PDFs / docs
 - 📈 Charts (Chart.js): daily activity, user status breakdown
